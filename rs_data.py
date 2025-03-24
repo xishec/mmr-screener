@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import gzip
 import json
+import sys
 import time
 import datetime as dt
 import os
@@ -403,7 +404,8 @@ def load_prices_from_yahoo(char):
     return tickers_dict
 
 
-def main(char='a'):
+def main():
+    char = None if len(sys.argv) <= 1 else sys.argv[1]
     load_prices_from_yahoo(char)
     # write_ticker_info_file(TICKER_INFO_DICT)
 

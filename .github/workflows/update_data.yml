@@ -1,4 +1,4 @@
-name: Calculate Relative Strength
+name: Update data
 
 on:
   # push:
@@ -13,7 +13,7 @@ on:
         default: 'a'
 
 jobs:
-  screen-stocks:
+  update-data:
     runs-on: ubuntu-latest
     steps:
       - name: checkout repo content
@@ -25,7 +25,7 @@ jobs:
       - name: execute py script # aggregate current data
         run: |
           python -m pip install -r requirements.txt
-          python relative-strength.py ${{ github.event.inputs.char }}
+          python rs_data.py ${{ github.event.inputs.char }}
 
       - name: Commit and push if changes
         run: |

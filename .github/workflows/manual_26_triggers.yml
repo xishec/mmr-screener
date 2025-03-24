@@ -11,7 +11,7 @@ on:
     types: [ completed ]
 
 jobs:
-  screen-stocks:
+  manual-26-triggers:
     runs-on: ubuntu-latest
     steps:
       - name: checkout repo content
@@ -22,15 +22,24 @@ jobs:
         with:
           script: |
             const alphabet = 'abcdefghijklmnopqrstuvwxyz';
-            for (const char of alphabet) {
+            const promises = alphabet.split('').map(async (char) => {
               await github.rest.actions.createWorkflowDispatch({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                workflow_id: 'relative_strength.yml',
+                workflow_id: 'update-data.yml',
                 ref: 'main',
                 inputs: {
                   char: char
                 }
               });
               await new Promise(resolve => setTimeout(resolve, 5000));
-            }
+            });
+            
+            await Promise.all(promises);
+            
+            await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'update_relative_strength.yml',
+                ref: 'main'
+              });
