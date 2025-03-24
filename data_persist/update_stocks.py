@@ -1,3 +1,5 @@
+import string
+
 import pandas as pd
 import yfinance as yf
 import json
@@ -65,17 +67,23 @@ def process_nasdaq_file():
         # Read data into DataFrame
         df = pd.read_csv(StringIO(response.text), delimiter='|')
 
-        # # Get only the first 150 elements
-        # df = df.head(200)
+        df = df.dropna(subset=['Symbol'])
+        df = df[~df['Symbol'].str.contains(r'\$')]
+
+        filtered_symbols = []
+        for letter in string.ascii_uppercase:
+            letter_symbols = df[df['Symbol'].str.startswith(letter)].head(7)
+            filtered_symbols.extend(letter_symbols['Symbol'].tolist())
+
+        print(f"Retrieved {len(filtered_symbols)} symbols from NASDAQ")
 
         print(f"Retrieved {len(df)} symbols from NASDAQ")
 
         session = requests.Session()
 
-        for _, row in df.iterrows():
-            symbol = row['Symbol']
+        for symbol in filtered_symbols:
             if symbol not in result:
-                sector, industry, marketCap = get_ticker_info(symbol, session)
+                sector, industry, marketCap = get_ticker_info(symbol.replace(".", ""), session)
 
                 if sector and industry and marketCap:
                     result[symbol] = {
