@@ -70,15 +70,14 @@ def process_nasdaq_file():
         df = df.dropna(subset=['Symbol'])
         df = df[~df['Symbol'].str.contains(r'\$')]
 
-        filtered_symbols = []
-        for letter in string.ascii_uppercase:
-            # letter_symbols = df[df['Symbol'].str.startswith(letter)].head(7)
-            letter_symbols = df[df['Symbol'].str.startswith(letter)]
-            filtered_symbols.extend(letter_symbols['Symbol'].tolist())
+        # filtered_symbols = []
+        # for letter in string.ascii_uppercase:
+        #     letter_symbols = df[df['Symbol'].str.startswith(letter)].head(7)
+        #     filtered_symbols.extend(letter_symbols['Symbol'].tolist())
+
+        filtered_symbols = df
 
         print(f"Retrieved {len(filtered_symbols)} symbols from NASDAQ")
-
-        print(f"Retrieved {len(df)} symbols from NASDAQ")
 
         session = requests.Session()
 
