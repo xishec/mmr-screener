@@ -64,8 +64,8 @@ def process_nasdaq_file():
         # Read data into DataFrame
         df = pd.read_csv(StringIO(response.text), delimiter='|')
 
-        # Get only the first 150 elements
-        df = df.head(150)
+        # # Get only the first 150 elements
+        # df = df.head(150)
 
         print(f"Retrieved {len(df)} symbols from NASDAQ")
 

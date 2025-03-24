@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 import json
 import time
-import bs4 as bs
 import datetime as dt
 import os
-import pickle
 import requests
 import yaml
 import yfinance as yf
