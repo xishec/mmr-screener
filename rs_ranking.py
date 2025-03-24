@@ -274,7 +274,7 @@ def rankings():
     return dfs
 
 
-def main(skipEnter=False):
+def main(skipEnter=True):
     for char in string.ascii_lowercase:
         file_path = f'data_persist/{char}_price_history.json.gz'
         try:
