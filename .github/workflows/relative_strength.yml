@@ -11,9 +11,6 @@ on:
         description: 'Character input for the script'
         required: true
         default: 'a'
-  workflow_run:
-    workflows: [ 'Update Stocks List' ]
-    types: [ completed ]
 
 jobs:
   screen-stocks:
