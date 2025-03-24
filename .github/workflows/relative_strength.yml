@@ -36,5 +36,8 @@ jobs:
           git config --local user.name "GitHub Action"
           git add --all
           git diff --quiet && git diff --staged --quiet || git commit -m "Update stocks data [automated]"
-          git pull --rebase  # Pull the latest changes
-          git push
+          for i in {1..10}; do
+            git pull --rebase && break || echo "Pull failed, retrying ($i/10)..."
+            git push
+            sleep 5
+          done
