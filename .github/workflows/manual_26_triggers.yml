@@ -35,11 +35,15 @@ jobs:
               const runs = await github.rest.actions.listWorkflowRunsForRepo({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                workflow_id: 'update_data.yml',
-                status: 'in_progress'
+                workflow_id: 'update_data.yml'
               });
             
-              if (runs.data.workflow_runs.length === 0) {
+              console.log(runs.data.workflow_runs);
+        
+              const inProgressRuns = runs.data.workflow_runs.filter(run => run.status === 'in_progress');
+        
+              if (inProgressRuns.length === 0) {
+                console.log('done');
                 await github.rest.actions.createWorkflowDispatch({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
