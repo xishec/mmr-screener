@@ -24,7 +24,7 @@
     "info": {
       "industry": "Shell Companies",
       "sector": "Financial Services",
-      "marketCap": 699062528
+      "marketCap": 698750016
     }
   },
   "BA": {
@@ -66,7 +66,7 @@
     "info": {
       "industry": "Airports & Air Services",
       "sector": "Industrials",
-      "marketCap": 2962445056
+      "marketCap": 2957612544
     }
   },
   "CAAS": {
@@ -94,14 +94,14 @@
     "info": {
       "industry": "Utilities - Regulated Electric",
       "sector": "Utilities",
-      "marketCap": 46274834432
+      "marketCap": 46279094272
     }
   },
   "DAC": {
     "info": {
       "industry": "Marine Shipping",
       "sector": "Industrials",
-      "marketCap": 1514827008
+      "marketCap": 1512960128
     }
   },
   "DADA": {
@@ -129,7 +129,7 @@
     "info": {
       "industry": "Airlines",
       "sector": "Industrials",
-      "marketCap": 31574622208
+      "marketCap": 31568160768
     }
   },
   "E": {
@@ -150,14 +150,14 @@
     "info": {
       "industry": "Asset Management",
       "sector": "Financial Services",
-      "marketCap": 407145952
+      "marketCap": 407441408
     }
   },
   "EAF": {
     "info": {
       "industry": "Electrical Equipment & Parts",
       "sector": "Industrials",
-      "marketCap": 259836640
+      "marketCap": 258550320
     }
   },
   "F": {
@@ -185,14 +185,14 @@
     "info": {
       "industry": "Information Technology Services",
       "sector": "Technology",
-      "marketCap": 8771152896
+      "marketCap": 8770274304
     }
   },
   "GAB": {
     "info": {
       "industry": "Asset Management",
       "sector": "Financial Services",
-      "marketCap": 1742079104
+      "marketCap": 1740542848
     }
   },
   "GABC": {
@@ -213,14 +213,14 @@
     "info": {
       "industry": "Lodging",
       "sector": "Consumer Cyclical",
-      "marketCap": 11760334848
+      "marketCap": 11767940096
     }
   },
   "HAE": {
     "info": {
       "industry": "Medical Devices",
       "sector": "Healthcare",
-      "marketCap": 3237806848
+      "marketCap": 3239816192
     }
   },
   "HAFC": {
@@ -234,7 +234,7 @@
     "info": {
       "industry": "Marine Shipping",
       "sector": "Industrials",
-      "marketCap": 2233466624
+      "marketCap": 2230951168
     }
   },
   "HAIN": {
@@ -255,14 +255,14 @@
     "info": {
       "industry": "Asset Management",
       "sector": "Financial Services",
-      "marketCap": 68493864
+      "marketCap": 68438896
     }
   },
   "IAF": {
     "info": {
       "industry": "Asset Management",
       "sector": "Financial Services",
-      "marketCap": 110158760
+      "marketCap": 110023096
     }
   },
   "IAG": {
@@ -276,7 +276,7 @@
     "info": {
       "industry": "Engineering & Construction",
       "sector": "Industrials",
-      "marketCap": 15096196096
+      "marketCap": 15094970368
     }
   },
   "JACK": {
@@ -297,21 +297,21 @@
     "info": {
       "industry": "Packaged Foods",
       "sector": "Consumer Defensive",
-      "marketCap": 28480319488
+      "marketCap": 28475142144
     }
   },
   "KAI": {
     "info": {
       "industry": "Specialty Industrial Machinery",
       "sector": "Industrials",
-      "marketCap": 4061905664
+      "marketCap": 4056028160
     }
   },
   "KALA": {
     "info": {
       "industry": "Biotechnology",
       "sector": "Healthcare",
-      "marketCap": 41785496
+      "marketCap": 42090052
     }
   },
   "KALU": {
@@ -332,14 +332,14 @@
     "info": {
       "industry": "Biotechnology",
       "sector": "Healthcare",
-      "marketCap": 13042686
+      "marketCap": 12930343
     }
   },
   "L": {
     "info": {
       "industry": "Insurance - Property & Casualty",
       "sector": "Financial Services",
-      "marketCap": 18672158720
+      "marketCap": 18667411456
     }
   },
   "LAB": {
@@ -353,49 +353,49 @@
     "info": {
       "industry": "Other Industrial Metals & Mining",
       "sector": "Basic Materials",
-      "marketCap": 654335552
+      "marketCap": 652132416
     }
   },
   "LAD": {
     "info": {
       "industry": "Auto & Truck Dealerships",
       "sector": "Consumer Cyclical",
-      "marketCap": 8406116864
+      "marketCap": 8405854720
     }
   },
   "LADR": {
     "info": {
       "industry": "REIT - Mortgage",
       "sector": "Real Estate",
-      "marketCap": 1476971648
+      "marketCap": 1475700608
     }
   },
   "M": {
     "info": {
       "industry": "Department Stores",
       "sector": "Consumer Cyclical",
-      "marketCap": 3871137792
+      "marketCap": 3862807040
     }
   },
   "MA": {
     "info": {
       "industry": "Credit Services",
       "sector": "Financial Services",
-      "marketCap": 495668297728
+      "marketCap": 495458615296
     }
   },
   "MAA": {
     "info": {
       "industry": "REIT - Residential",
       "sector": "Real Estate",
-      "marketCap": 19641436160
+      "marketCap": 19647432704
     }
   },
   "MAC": {
     "info": {
       "industry": "REIT - Retail",
       "sector": "Real Estate",
-      "marketCap": 4692489216
+      "marketCap": 4693807616
     }
   },
   "NAAS": {
@@ -409,21 +409,21 @@
     "info": {
       "industry": "Information Technology Services",
       "sector": "Technology",
-      "marketCap": 1422801152
+      "marketCap": 1421856384
     }
   },
   "NAC": {
     "info": {
       "industry": "Asset Management",
       "sector": "Financial Services",
-      "marketCap": 1636805888
+      "marketCap": 1636082304
     }
   },
   "NAD": {
     "info": {
       "industry": "Asset Management",
       "sector": "Financial Services",
-      "marketCap": 2719168000
+      "marketCap": 2713332992
     }
   },
   "NAGE": {
@@ -444,7 +444,7 @@
     "info": {
       "industry": "REIT - Retail",
       "sector": "Real Estate",
-      "marketCap": 50174521344
+      "marketCap": 50152235008
     }
   },
   "OABI": {
@@ -465,35 +465,35 @@
     "info": {
       "industry": "Gold",
       "sector": "Basic Materials",
-      "marketCap": 9375030272
+      "marketCap": 9364158464
     }
   },
   "PAC": {
     "info": {
       "industry": "Airports & Air Services",
       "sector": "Industrials",
-      "marketCap": 9770205184
+      "marketCap": 9763249152
     }
   },
   "R": {
     "info": {
       "industry": "Rental & Leasing Services",
       "sector": "Industrials",
-      "marketCap": 6058807296
+      "marketCap": 6052337664
     }
   },
   "RA": {
     "info": {
       "industry": "Asset Management",
       "sector": "Financial Services",
-      "marketCap": 728256960
+      "marketCap": 727704384
     }
   },
   "RACE": {
     "info": {
       "industry": "Auto Manufacturers",
       "sector": "Consumer Cyclical",
-      "marketCap": 79777808384
+      "marketCap": 79770853376
     }
   },
   "RADX": {
@@ -507,14 +507,14 @@
     "info": {
       "industry": "Software - Infrastructure",
       "sector": "Technology",
-      "marketCap": 6462188032
+      "marketCap": 6463794688
     }
   },
   "SA": {
     "info": {
       "industry": "Gold",
       "sector": "Basic Materials",
-      "marketCap": 1182582528
+      "marketCap": 1180579840
     }
   },
   "SABA": {
@@ -542,14 +542,14 @@
     "info": {
       "industry": "Telecom Services",
       "sector": "Communication Services",
-      "marketCap": 193523728384
+      "marketCap": 193380171776
     }
   },
   "TAC": {
     "info": {
       "industry": "Utilities - Independent Power Producers",
       "sector": "Utilities",
-      "marketCap": 2928806656
+      "marketCap": 2927309312
     }
   },
   "TACT": {
@@ -563,21 +563,21 @@
     "info": {
       "industry": "Software - Application",
       "sector": "Technology",
-      "marketCap": 9311684608
+      "marketCap": 9309636608
     }
   },
   "UA": {
     "info": {
       "industry": "Apparel Manufacturing",
       "sector": "Consumer Cyclical",
-      "marketCap": 2742149632
+      "marketCap": 2744357632
     }
   },
   "UAA": {
     "info": {
       "industry": "Apparel Manufacturing",
       "sector": "Consumer Cyclical",
-      "marketCap": 2773298176
+      "marketCap": 2775395840
     }
   },
   "UAL": {
@@ -598,14 +598,14 @@
     "info": {
       "industry": "Agricultural Inputs",
       "sector": "Basic Materials",
-      "marketCap": 800330112
+      "marketCap": 799061760
     }
   },
   "V": {
     "info": {
       "industry": "Credit Services",
       "sector": "Financial Services",
-      "marketCap": 663328653312
+      "marketCap": 663097180160
     }
   },
   "VABK": {
@@ -619,14 +619,14 @@
     "info": {
       "industry": "Resorts & Casinos",
       "sector": "Consumer Cyclical",
-      "marketCap": 2344944896
+      "marketCap": 2343897600
     }
   },
   "W": {
     "info": {
       "industry": "Internet Retail",
       "sector": "Consumer Cyclical",
-      "marketCap": 4804623360
+      "marketCap": 4812237312
     }
   },
   "WAB": {
@@ -668,7 +668,7 @@
     "info": {
       "industry": "Household & Personal Products",
       "sector": "Consumer Defensive",
-      "marketCap": 5051090
+      "marketCap": 5054102
     }
   },
   "XAIR": {
@@ -682,21 +682,21 @@
     "info": {
       "industry": "Software - Application",
       "sector": "Technology",
-      "marketCap": 80520000
+      "marketCap": 81526504
     }
   },
   "YALA": {
     "info": {
       "industry": "Software - Application",
       "sector": "Technology",
-      "marketCap": 845183040
+      "marketCap": 846771712
     }
   },
   "YCBD": {
     "info": {
       "industry": "Drug Manufacturers - Specialty & Generic",
       "sector": "Healthcare",
-      "marketCap": 1717894
+      "marketCap": 1747329
     }
   },
   "Z": {
