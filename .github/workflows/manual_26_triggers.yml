@@ -21,7 +21,8 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+#            const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+            const alphabet = 'abc';
             const promises = alphabet.split('').map(async (char) => {
               await github.rest.actions.createWorkflowDispatch({
                 owner: context.repo.owner,
@@ -32,14 +33,28 @@ jobs:
                   char: char
                 }
               });
-              await new Promise(resolve => setTimeout(resolve, 5000));
             });
             
             await Promise.all(promises);
             
-            await github.rest.actions.createWorkflowDispatch({
+            async function checkWorkflowsCompletion() {
+              const runs = await github.rest.actions.listWorkflowRunsForRepo({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                workflow_id: 'update_relative_strength.yml',
-                ref: 'main'
+                workflow_id: 'update_data.yml',
+                status: 'in_progress'
               });
+            
+              if (runs.data.workflow_runs.length === 0) {
+                await github.rest.actions.createWorkflowDispatch({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  workflow_id: 'update_relative_strength.yml',
+                  ref: 'main'
+                });
+              } else {
+                setTimeout(checkWorkflowsCompletion, 5000);
+              }
+            }
+            
+            await checkWorkflowsCompletion();
