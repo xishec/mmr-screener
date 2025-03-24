@@ -9,7 +9,7 @@ with open('output/rs_stocks.csv', mode='r') as csv_file:
     first_half_rows = rows[1:len(rows) // 2 + 1]
 
 # Load price_history.json
-with open('data/price_history.json', mode='r') as json_file:
+with open('data_persist/price_history.json', mode='r') as json_file:
     price_history = json.load(json_file)
 
 
