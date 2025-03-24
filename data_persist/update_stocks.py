@@ -5,6 +5,7 @@ from time import sleep
 import requests
 from pathlib import Path
 from io import StringIO  # Added this due to error
+from yfinance.exceptions import YFException
 
 
 def get_ticker_info(symbol, session):
@@ -47,14 +48,14 @@ def process_nasdaq_file():
     output_file = script_dir / 'ticker_info.json'
 
     # Load existing data if available
-    if output_file.exists():
-        try:
-            with open(output_file, 'r') as f:
-                result = json.load(f)
-            print(f"Loaded existing data with {len(result)} entries")
-        except Exception as e:
-            print(f"Error loading existing file: {e}")
-            pass
+    # if output_file.exists():
+    #     try:
+    #         with open(output_file, 'r') as f:
+    #             result = json.load(f)
+    #         print(f"Loaded existing data with {len(result)} entries")
+    #     except Exception as e:
+    #         print(f"Error loading existing file: {e}")
+    #         pass
 
     try:
         # Download and process NASDAQ data
@@ -89,10 +90,10 @@ def process_nasdaq_file():
                     # Save after each successful addition
                     with open(output_file, 'w') as f:
                         json.dump(result, f, indent=2)
-                else:
-                    print(f"Skipped (missing data after retries): {symbol}")
+                # else:
+                # print(f"Skipped (missing data after retries): {symbol}")
 
-                sleep(1)  # Pause between symbols
+                sleep(0.5)  # Pause between symbols
 
     except Exception as e:
         print(f"Error processing NASDAQ data: {e}")
