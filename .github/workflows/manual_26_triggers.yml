@@ -26,7 +26,7 @@ jobs:
               await github.rest.actions.createWorkflowDispatch({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                workflow_id: 'update-data.yml',
+                workflow_id: 'update_data.yml',
                 ref: 'main',
                 inputs: {
                   char: char
