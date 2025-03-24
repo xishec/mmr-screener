@@ -33,8 +33,11 @@ jobs:
           git config --local user.name "GitHub Action"
           git add --all
           git diff --quiet && git diff --staged --quiet || git commit -m "Update stocks data [automated]"
-          for i in {1..10}; do
-            git pull --rebase && break || echo "Pull failed, retrying ($i/10)..."
-            git push
+          git pull --rebase 
+          sleep 5
+          for i in {1..5}; do
+            git push && break || echo "Push failed, retrying ($i/10)..."
             sleep 5
+            git pull --rebase 
           done
+          git push
