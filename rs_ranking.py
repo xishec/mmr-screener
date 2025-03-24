@@ -20,7 +20,7 @@ except FileNotFoundError:
 except yaml.YAMLError as exc:
     print(exc)
 
-PRICE_DATA = os.path.join(DIR, "data", "price_history.json")
+PRICE_DATA = os.path.join(DIR, "data_persist", "price_history.json")
 MIN_PERCENTILE = cfg("MIN_PERCENTILE")
 POS_COUNT_TARGET = cfg("POSITIONS_COUNT_TARGET")
 REFERENCE_TICKER = cfg("REFERENCE_TICKER")
