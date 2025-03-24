@@ -1,0 +1,30 @@
+name: Update Stocks Data Weekly
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Every Sunday at midnight
+  workflow_dispatch:      # Allow manual trigger
+
+jobs:
+  update-stocks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repo content
+        uses: actions/checkout@v3 # checkout the repository content to github runner.
+      - name: setup python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.8 #install the python needed
+      - name: execute py script # aggregate current data
+        run: |
+          python -m pip install -r requirements.txt
+          python data_persist/update_stocks.py
+
+      - name: Commit and push if changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data_persist/ticker_info.json
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update stocks data [automated]"
+          git pull --rebase  # Pull the latest changes
+          git push
