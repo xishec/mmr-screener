@@ -243,7 +243,7 @@ def get_yf_data(security, start_date, end_date):
         )
 
         # Add a small delay to avoid rate limiting (adjust as needed)
-        time.sleep(0.01)
+        time.sleep(0.1)
 
         # Check if DataFrame is empty
         if df.empty:
