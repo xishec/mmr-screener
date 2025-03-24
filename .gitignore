@@ -135,3 +135,4 @@ build/
 dist/
 config_private.yaml
 /.idea
+data_persist/price_history.json
