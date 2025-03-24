@@ -18,8 +18,8 @@ from datetime import datetime
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 
-if not os.path.exists(os.path.join(DIR, 'data')):
-    os.makedirs(os.path.join(DIR, 'data'))
+if not os.path.exists(os.path.join(DIR, 'data_persist')):
+    os.makedirs(os.path.join(DIR, 'data_persist'))
 if not os.path.exists(os.path.join(DIR, 'tmp')):
     os.makedirs(os.path.join(DIR, 'tmp'))
 
@@ -55,7 +55,7 @@ def read_json(json_file):
         return json.load(fp)
 
 
-PRICE_DATA_FILE = os.path.join(DIR, "data", "price_history.json")
+PRICE_DATA_FILE = os.path.join(DIR, "data_persist", "price_history.json")
 REFERENCE_TICKER = cfg("REFERENCE_TICKER")
 ALL_STOCKS = cfg("USE_ALL_LISTED_STOCKS")
 TICKER_INFO_FILE = os.path.join(DIR, "data_persist", "ticker_info.json")
@@ -69,45 +69,10 @@ REF_TICKER = {"ticker": REFERENCE_TICKER,
 UNKNOWN = "unknown"
 
 
-# def get_securities(url, ticker_pos=1, table_pos=1, sector_offset=1, industry_offset=1, universe="N/A"):
-#     resp = requests.get(url)
-#     soup = bs.BeautifulSoup(resp.text, 'lxml')
-#     table = soup.findAll('table', {'class': 'wikitable sortable'})[table_pos - 1]
-#     secs = {}
-#     for row in table.findAll('tr')[table_pos:]:
-#         sec = {}
-#         sec["ticker"] = row.findAll('td')[ticker_pos - 1].text.strip()
-#         sec["sector"] = row.findAll('td')[ticker_pos - 1 + sector_offset].text.strip()
-#         sec["industry"] = row.findAll('td')[ticker_pos - 1 + sector_offset + industry_offset].text.strip()
-#         sec["universe"] = universe
-#         secs[sec["ticker"]] = sec
-#     with open(os.path.join(DIR, "tmp", "tickers.pickle"), "wb") as f:
-#         pickle.dump(secs, f)
-#     return secs
-
-
 def get_resolved_securities():
     tickers = {REFERENCE_TICKER: REF_TICKER}
     if ALL_STOCKS:
         return get_tickers_from_nasdaq(tickers)
-        # return {"1": {"ticker": "DTST", "sector": "MICsec", "industry": "MICind", "universe": "we"}, "2": {"ticker": "MIGI", "sector": "MIGIsec", "industry": "MIGIind", "universe": "we"}}
-    # else:
-    #     return get_tickers_from_wikipedia(tickers)
-
-
-# def get_tickers_from_wikipedia(tickers):
-#     if cfg("NQ100"):
-#         tickers.update(get_securities('https://en.wikipedia.org/wiki/Nasdaq-100', 2, 3, universe="Nasdaq 100"))
-#     if cfg("SP500"):
-#         tickers.update(get_securities('http://en.wikipedia.org/wiki/List_of_S%26P_500_companies', sector_offset=3,
-#                                       universe="S&P 500"))
-#     if cfg("SP400"):
-#         tickers.update(
-#             get_securities('https://en.wikipedia.org/wiki/List_of_S%26P_400_companies', 2, universe="S&P 400"))
-#     if cfg("SP600"):
-#         tickers.update(
-#             get_securities('https://en.wikipedia.org/wiki/List_of_S%26P_600_companies', 2, universe="S&P 600"))
-#     return tickers
 
 
 def exchange_from_symbol(symbol):
@@ -145,7 +110,8 @@ def get_tickers_from_nasdaq(tickers):
         sec = {}
         values = entry.split('|')
         ticker = values[ticker_column]
-        if re.match(r'^[A-Z]+$', ticker) and values[etf_column] == "N" and values[test_column] == "N":
+        if ticker in TICKER_INFO_DICT and re.match(r'^[A-Z]+$', ticker) and values[etf_column] == "N" and values[
+            test_column] == "N":
             sec["ticker"] = ticker
             sec["sector"] = UNKNOWN
             sec["industry"] = UNKNOWN
@@ -274,7 +240,7 @@ def get_yf_data(security, start_date, end_date):
         )
 
         # Add a small delay to avoid rate limiting (adjust as needed)
-        time.sleep(0.1)
+        time.sleep(0.01)
 
         # Check if DataFrame is empty
         if df.empty:
