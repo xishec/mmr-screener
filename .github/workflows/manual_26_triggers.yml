@@ -16,7 +16,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const alphabet = 'abc';
+            const alphabet = 'xyz';
             const promises = alphabet.split('').map(async (char) => {
               await github.rest.actions.createWorkflowDispatch({
                 owner: context.repo.owner,
@@ -37,12 +37,12 @@ jobs:
                 repo: context.repo.repo,
                 workflow_id: 'update_data.yml'
               });
-            
-              console.log(runs.data.workflow_runs);
         
-              const inProgressRuns = runs.data.workflow_runs.filter(run => run.status === 'in_progress');
+              const incompleteRuns = runs.data.workflow_runs.filter(run => run.status !== 'completed' && run.id !== context.runId);
+
+              console.log(runs.data.workflow_runs.length);
         
-              if (inProgressRuns.length === 0) {
+              if (incompleteRuns.length === 0) {
                 console.log('done');
                 await github.rest.actions.createWorkflowDispatch({
                   owner: context.repo.owner,
