@@ -72,7 +72,8 @@ def process_nasdaq_file():
 
         filtered_symbols = []
         for letter in string.ascii_uppercase:
-            letter_symbols = df[df['Symbol'].str.startswith(letter)].head(7)
+            # letter_symbols = df[df['Symbol'].str.startswith(letter)].head(7)
+            letter_symbols = df[df['Symbol'].str.startswith(letter)]
             filtered_symbols.extend(letter_symbols['Symbol'].tolist())
 
         print(f"Retrieved {len(filtered_symbols)} symbols from NASDAQ")
