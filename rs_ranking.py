@@ -1,5 +1,6 @@
 import gzip
 import json
+import string
 
 import pandas as pd
 import os
@@ -22,8 +23,8 @@ except FileNotFoundError:
 except yaml.YAMLError as exc:
     print(exc)
 
-with gzip.open('data_persist/price_history.json.gz', 'rb') as f_in:
-    PRICE_DATA = json.loads(f_in.read().decode('utf-8'))
+PRICE_DATA = {}
+
 # PRICE_DATA = os.path.join(DIR, "data_persist", "price_history.json")
 MIN_PERCENTILE = cfg("MIN_PERCENTILE")
 POS_COUNT_TARGET = cfg("POSITIONS_COUNT_TARGET")
@@ -274,6 +275,15 @@ def rankings():
 
 
 def main(skipEnter=False):
+    for char in string.ascii_lowercase:
+        file_path = f'data_persist/{char}_price_history.json.gz'
+        try:
+            with gzip.open(file_path, 'rb') as f_in:
+                data = json.loads(f_in.read().decode('utf-8'))
+                PRICE_DATA.update(data)
+        except:
+            print(f"File not found: {char}")
+
     ranks = rankings()
     print(ranks[0])
     print("***\nYour 'rs_stocks.csv' is in the output folder.\n***")

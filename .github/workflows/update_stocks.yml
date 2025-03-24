@@ -28,3 +28,20 @@ jobs:
           git diff --quiet && git diff --staged --quiet || git commit -m "Update stocks data [automated]"
           git pull --rebase  # Pull the latest changes
           git push
+
+      - name: trigger screen stocks with every letter of the alphabet
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+            for (const char of alphabet) {
+              await github.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'relative_strength.yml',
+                ref: context.ref,
+                inputs: {
+                  char: char
+                }
+              });
+            }

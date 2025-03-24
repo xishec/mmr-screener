@@ -123,9 +123,6 @@ def get_tickers_from_nasdaq(tickers):
     return tickers
 
 
-SECURITIES = get_resolved_securities().values()
-
-
 # SECURITIES = list(get_resolved_securities().values())[:120]
 
 
@@ -134,8 +131,8 @@ def write_to_file(dict, file):
         json.dump(dict, fp, ensure_ascii=False)
 
 
-def write_price_history_file(tickers_dict):
-    with gzip.open('data_persist/price_history.json.gz', 'wb') as f_out:
+def write_price_history_file(char, tickers_dict):
+    with gzip.open(f'data_persist/{char.lower()}_price_history.json.gz', 'wb') as f_out:
         json_str = json.dumps(tickers_dict)
         f_out.write(json_str.encode('utf-8'))
 
@@ -243,7 +240,7 @@ def get_yf_data(security, start_date, end_date):
         )
 
         # Add a small delay to avoid rate limiting (adjust as needed)
-        time.sleep(0.1)
+        time.sleep(0.01)
 
         # Check if DataFrame is empty
         if df.empty:
@@ -311,7 +308,7 @@ def get_yf_data(security, start_date, end_date):
         return None
 
 
-def load_prices_from_yahoo(securities):
+def load_prices_from_yahoo(char):
     print("*** Loading Stocks from Yahoo Finance ***")
     today = date.today()
     start = time.time()
@@ -323,6 +320,12 @@ def load_prices_from_yahoo(securities):
     # Add retry mechanism
     max_retries = 2
     base_delay = 2  # seconds
+
+    securities = [
+        security for security in get_resolved_securities().values()
+        if (security["ticker"] == "SPY" or
+            (security["ticker"] in TICKER_INFO_DICT and security["ticker"].lower().startswith(char.lower())))
+    ]
 
     for idx, security in enumerate(securities):
         ticker = security["ticker"]
@@ -387,21 +390,21 @@ def load_prices_from_yahoo(securities):
         #     print(f"Saving intermediate results after {idx} tickers...")
         #     write_price_history_file(tickers_dict)
 
-    # Report on failures
-    if failed_tickers:
-        print(f"Failed for {len(failed_tickers)} tickers: {', '.join(failed_tickers[:10])}...")
-        with open("failed_tickers.txt", "w") as f:
-            f.write("\n".join(failed_tickers))
-        print(f"Saved list of failed tickers to failed_tickers.txt")
+    # # Report on failures
+    # if failed_tickers:
+    #     print(f"Failed for {len(failed_tickers)} tickers: {', '.join(failed_tickers[:10])}...")
+    #     with open("failed_tickers.txt", "w") as f:
+    #         f.write("\n".join(failed_tickers))
+    #     print(f"Saved list of failed tickers to failed_tickers.txt")
 
     # Write results to file
-    write_price_history_file(tickers_dict)
+    write_price_history_file(char, tickers_dict)
 
     return tickers_dict
 
 
-def main():
-    load_prices_from_yahoo(SECURITIES)
+def main(char='a'):
+    load_prices_from_yahoo(char)
     # write_ticker_info_file(TICKER_INFO_DICT)
 
 
