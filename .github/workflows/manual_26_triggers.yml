@@ -1,14 +1,9 @@
 name: Manual 26 Triggers
 
 on:
-  # push:
-  # branches: [ main ]
   schedule:
     - cron: "0 0 * * *"
   workflow_dispatch:      # Allow manual trigger
-  workflow_run:
-    workflows: [ 'Calculate Relative Strength' ]
-    types: [ completed ]
 
 jobs:
   manual-26-triggers:
@@ -21,7 +16,6 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-#            const alphabet = 'abcdefghijklmnopqrstuvwxyz';
             const alphabet = 'abc';
             const promises = alphabet.split('').map(async (char) => {
               await github.rest.actions.createWorkflowDispatch({
