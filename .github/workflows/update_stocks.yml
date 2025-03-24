@@ -1,4 +1,4 @@
-name: Update Stocks
+name: Update Stocks List
 
 on:
   schedule:

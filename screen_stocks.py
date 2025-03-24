@@ -1,4 +1,5 @@
 import csv
+import gzip
 import json
 
 # Load the first half of rs_stocks.csv
@@ -9,8 +10,8 @@ with open('output/rs_stocks.csv', mode='r') as csv_file:
     first_half_rows = rows[1:len(rows) // 2 + 1]
 
 # Load price_history.json
-with open('data_persist/price_history.json', mode='r') as json_file:
-    price_history = json.load(json_file)
+with gzip.open('data_persist/price_history.json.gz', 'rb') as f_in:
+    price_history = json.loads(f_in.read().decode('utf-8'))
 
 
 def calculate_sma(prices, window):

@@ -1,4 +1,6 @@
-import sys
+import gzip
+import json
+
 import pandas as pd
 import os
 import yaml
@@ -20,7 +22,9 @@ except FileNotFoundError:
 except yaml.YAMLError as exc:
     print(exc)
 
-PRICE_DATA = os.path.join(DIR, "data_persist", "price_history.json")
+with gzip.open('data_persist/price_history.json.gz', 'rb') as f_in:
+    PRICE_DATA = json.loads(f_in.read().decode('utf-8'))
+# PRICE_DATA = os.path.join(DIR, "data_persist", "price_history.json")
 MIN_PERCENTILE = cfg("MIN_PERCENTILE")
 POS_COUNT_TARGET = cfg("POSITIONS_COUNT_TARGET")
 REFERENCE_TICKER = cfg("REFERENCE_TICKER")
@@ -108,7 +112,7 @@ def generate_tradingview_csv(percentile_values, first_rs_values):
 
 def rankings():
     """Returns a dataframe with percentile rankings for relative strength"""
-    json = read_json(PRICE_DATA)
+    json = PRICE_DATA
     relative_strengths = []
     ranks = []
     industries = {}

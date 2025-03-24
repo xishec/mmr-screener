@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import gzip
 import json
 import time
 import datetime as dt
@@ -18,8 +19,8 @@ from datetime import datetime
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 
-if not os.path.exists(os.path.join(DIR, 'data_persist')):
-    os.makedirs(os.path.join(DIR, 'data_persist'))
+# if not os.path.exists(os.path.join(DIR, 'data')):
+#     os.makedirs(os.path.join(DIR, 'data'))
 if not os.path.exists(os.path.join(DIR, 'tmp')):
     os.makedirs(os.path.join(DIR, 'tmp'))
 
@@ -55,7 +56,7 @@ def read_json(json_file):
         return json.load(fp)
 
 
-PRICE_DATA_FILE = os.path.join(DIR, "data_persist", "price_history.json")
+# PRICE_DATA_FILE = os.path.join(DIR, "data", "price_history.json")
 REFERENCE_TICKER = cfg("REFERENCE_TICKER")
 ALL_STOCKS = cfg("USE_ALL_LISTED_STOCKS")
 TICKER_INFO_FILE = os.path.join(DIR, "data_persist", "ticker_info.json")
@@ -134,11 +135,13 @@ def write_to_file(dict, file):
 
 
 def write_price_history_file(tickers_dict):
-    write_to_file(tickers_dict, PRICE_DATA_FILE)
+    with gzip.open('data_persist/price_history.json.gz', 'wb') as f_out:
+        json_str = json.dumps(tickers_dict)
+        f_out.write(json_str.encode('utf-8'))
 
 
-def write_ticker_info_file(info_dict):
-    write_to_file(info_dict, TICKER_INFO_FILE)
+# def write_ticker_info_file(info_dict):
+#     write_to_file(info_dict, TICKER_INFO_FILE)
 
 
 def enrich_ticker_data(ticker_response, security):
@@ -318,7 +321,7 @@ def load_prices_from_yahoo(securities):
     failed_tickers = []
 
     # Add retry mechanism
-    max_retries = 1
+    max_retries = 2
     base_delay = 2  # seconds
 
     for idx, security in enumerate(securities):
@@ -353,21 +356,21 @@ def load_prices_from_yahoo(securities):
             failed_tickers.append(ticker)
             continue
 
-        # Add industry info if available
-        if not ticker in TICKER_INFO_DICT:
-            try:
-                load_ticker_info(ticker, TICKER_INFO_DICT)
-                write_ticker_info_file(TICKER_INFO_DICT)
-            except Exception as e:
-                print(f"Error loading ticker info for {ticker}: {str(e)}")
+        # # Add industry info if available
+        # if not ticker in TICKER_INFO_DICT:
+        #     try:
+        #         load_ticker_info(ticker, TICKER_INFO_DICT)
+        #         write_ticker_info_file(TICKER_INFO_DICT)
+        #     except Exception as e:
+        #         print(f"Error loading ticker info for {ticker}: {str(e)}")
 
-        # Add industry data safely with error handling
-        try:
-            ticker_data["industry"] = TICKER_INFO_DICT[ticker]["info"]["industry"]
-        except (KeyError, TypeError):
-            # Set a default if industry info is missing
-            ticker_data["industry"] = "Unknown"
-            print(f"Warning: Could not find industry information for {ticker}")
+        # # Add industry data safely with error handling
+        # try:
+        #     ticker_data["industry"] = TICKER_INFO_DICT[ticker]["info"]["industry"]
+        # except (KeyError, TypeError):
+        #     # Set a default if industry info is missing
+        #     ticker_data["industry"] = "Unknown"
+        #     print(f"Warning: Could not find industry information for {ticker}")
 
         # Track timing and progress
         now = time.time()
@@ -379,10 +382,10 @@ def load_prices_from_yahoo(securities):
         # Add to results dictionary
         tickers_dict[ticker] = ticker_data
 
-        # Periodically save results to avoid losing everything if the process fails
-        if idx > 0 and idx % 100 == 0:
-            print(f"Saving intermediate results after {idx} tickers...")
-            write_price_history_file(tickers_dict)
+        # # Periodically save results to avoid losing everything if the process fails
+        # if idx > 0 and idx % 100 == 0:
+        #     print(f"Saving intermediate results after {idx} tickers...")
+        #     write_price_history_file(tickers_dict)
 
     # Report on failures
     if failed_tickers:
@@ -399,7 +402,7 @@ def load_prices_from_yahoo(securities):
 
 def main():
     load_prices_from_yahoo(SECURITIES)
-    write_ticker_info_file(TICKER_INFO_DICT)
+    # write_ticker_info_file(TICKER_INFO_DICT)
 
 
 if __name__ == "__main__":
