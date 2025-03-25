@@ -31,28 +31,33 @@ jobs:
             
             await Promise.all(promises);
             
+            async function sleep(ms) {
+              return new Promise(resolve => setTimeout(resolve, ms));
+            }
+            
             async function checkWorkflowsCompletion() {
-              const runs = await github.rest.actions.listWorkflowRunsForRepo({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                workflow_id: 'update_data.yml'
-              });
-        
-              const incompleteRuns = runs.data.workflow_runs.filter(run => run.status !== 'completed' && run.id !== context.runId);
-
-              console.log(runs.data.workflow_runs.length);
-        
-              if (incompleteRuns.length === 0) {
-                console.log('done');
-                await github.rest.actions.createWorkflowDispatch({
+              let incompleteRuns = [];
+              do {
+                await sleep(1000);
+                const runs = await github.rest.actions.listWorkflowRunsForRepo({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  workflow_id: 'update_relative_strength.yml',
-                  ref: 'main'
+                  workflow_id: 'update_data.yml'
                 });
-              } else {
-                setTimeout(checkWorkflowsCompletion, 1000);
-              }
+                incompleteRuns = runs.data.workflow_runs.filter(run =>
+                  run.status !== 'completed' && run.id !== context.runId
+                );
+                console.log("runs", runs.length);
+                console.log("incompleteRuns", incompleteRuns.length);
+              } while (incompleteRuns.length > 0);
+              
+              console.log('done');
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'update_relative_strength.yml',
+                ref: 'main'
+              });
             }
             
             await checkWorkflowsCompletion();
