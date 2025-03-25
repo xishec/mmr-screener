@@ -47,7 +47,7 @@ jobs:
                 const workflowRuns = runsResponse.data.workflow_runs;
                 console.log("Total workflow runs:", workflowRuns.length);
                 incompleteRuns = workflowRuns.filter(run =>
-                  run.status !== 'completed'
+                  run.status !== 'completed' && run.id !== context.runId
                 );
                 console.log("Incomplete runs:", incompleteRuns.length);
               } while (incompleteRuns.length > 0);
