@@ -23,9 +23,7 @@ jobs:
                 repo: context.repo.repo,
                 workflow_id: 'update_data.yml',
                 ref: 'main',
-                inputs: {
-                  char: char
-                }
+                inputs: { char }
               });
             });
             
@@ -39,18 +37,20 @@ jobs:
               let incompleteRuns = [];
               do {
                 await sleep(1000);
-                const runs = await github.rest.actions.listWorkflowRunsForRepo({
+                const runsResponse = await github.rest.actions.listWorkflowRunsForRepo({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   workflow_id: 'update_data.yml'
                 });
-                incompleteRuns = runs.data.workflow_runs.filter(run =>
+                // Access the workflow runs from runsResponse.data.workflow_runs
+                const workflowRuns = runsResponse.data.workflow_runs;
+                console.log("Total workflow runs:", workflowRuns.length);
+                incompleteRuns = workflowRuns.filter(run =>
                   run.status !== 'completed' && run.id !== context.runId
                 );
-                console.log("runs", runs.length);
-                console.log("incompleteRuns", incompleteRuns.length);
+                console.log("Incomplete runs:", incompleteRuns.length);
               } while (incompleteRuns.length > 0);
-              
+            
               console.log('done');
               await github.rest.actions.createWorkflowDispatch({
                 owner: context.repo.owner,
