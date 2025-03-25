@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import gzip
 import json
 import sys
@@ -11,10 +10,7 @@ import yfinance as yf
 import pandas as pd
 import dateutil.relativedelta
 import numpy as np
-import re
-from ftplib import FTP
 from io import StringIO
-
 from datetime import date
 from datetime import datetime
 
@@ -54,7 +50,6 @@ ALL_STOCKS = cfg("USE_ALL_LISTED_STOCKS")
 def get_tickers_from_nasdaq():
     print("*** Loading Stocks from Nasdaq ***")
     url = "https://www.nasdaqtrader.com/dynamic/symdir/nasdaqtraded.txt"
-    result = {}
 
     response = requests.get(url)
     response.raise_for_status()

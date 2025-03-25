@@ -6,8 +6,8 @@ import pandas as pd
 import os
 import yaml
 from rs_data import cfg
-from functools import reduce
 import datetime
+import screen_stocks
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -198,6 +198,7 @@ def main():
 
     ranks = rankings(PRICE_DATA)
     print(ranks[0])
+    screen_stocks.main()
 
 
 if __name__ == "__main__":
