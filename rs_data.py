@@ -20,11 +20,6 @@ from datetime import datetime
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 
-# if not os.path.exists(os.path.join(DIR, 'data')):
-#     os.makedirs(os.path.join(DIR, 'data'))
-if not os.path.exists(os.path.join(DIR, 'tmp')):
-    os.makedirs(os.path.join(DIR, 'tmp'))
-
 try:
     with open(os.path.join(DIR, 'config_private.yaml'), 'r') as stream:
         private_config = yaml.safe_load(stream)
@@ -52,79 +47,35 @@ def cfg(key):
             return None
 
 
-def read_json(json_file):
-    with open(json_file, "r", encoding="utf-8") as fp:
-        return json.load(fp)
-
-
-# PRICE_DATA_FILE = os.path.join(DIR, "data", "price_history.json")
 REFERENCE_TICKER = cfg("REFERENCE_TICKER")
 ALL_STOCKS = cfg("USE_ALL_LISTED_STOCKS")
-TICKER_INFO_FILE = os.path.join(DIR, "data_persist", "ticker_info.json")
-TICKER_INFO_DICT = read_json(TICKER_INFO_FILE)
-REF_TICKER = {"ticker": REFERENCE_TICKER,
-              "sector": "--- Reference ---",
-              "industry": "--- Reference ---",
-              "marketCap": "--- Reference ---",
-              "universe": "--- Reference ---"}
-
-UNKNOWN = "unknown"
 
 
-def get_resolved_securities():
-    tickers = {REFERENCE_TICKER: REF_TICKER}
-    if ALL_STOCKS:
-        return get_tickers_from_nasdaq(tickers)
+def get_tickers_from_nasdaq():
+    print("*** Loading Stocks from Nasdaq ***")
+    url = "https://www.nasdaqtrader.com/dynamic/symdir/nasdaqtraded.txt"
+    result = {}
 
+    response = requests.get(url)
+    response.raise_for_status()
 
-def exchange_from_symbol(symbol):
-    if symbol == "Q":
-        return "NASDAQ"
-    if symbol == "A":
-        return "NYSE MKT"
-    if symbol == "N":
-        return "NYSE"
-    if symbol == "P":
-        return "NYSE ARCA"
-    if symbol == "Z":
-        return "BATS"
-    if symbol == "V":
-        return "IEXG"
-    return "n/a"
+    df = pd.read_csv(StringIO(response.text), delimiter='|')
 
+    # Drop rows with missing 'Symbol' values and filter out rows with '$' in 'Symbol'
+    filtered_symbols = df.dropna(subset=['Symbol'])
+    filtered_symbols = filtered_symbols[~filtered_symbols['Symbol'].str.contains(r'\$')]
+    filtered_symbols['Symbol'] = filtered_symbols['Symbol'].str.replace(".", "", regex=False)
 
-def get_tickers_from_nasdaq(tickers):
-    filename = "nasdaqtraded.txt"
-    ticker_column = 1
-    etf_column = 5
-    exchange_column = 3
-    test_column = 7
-    ftp = FTP('ftp.nasdaqtrader.com')
-    ftp.login()
-    ftp.cwd('SymbolDirectory')
-    lines = StringIO()
-    ftp.retrlines('RETR ' + filename, lambda x: lines.write(str(x) + '\n'))
-    ftp.quit()
-    lines.seek(0)
-    results = lines.readlines()
+    # Extract the 'Symbol' column as a list
+    symbols_list = filtered_symbols['Symbol'].tolist()
 
-    for entry in results:
-        sec = {}
-        values = entry.split('|')
-        ticker = values[ticker_column]
-        if ticker in TICKER_INFO_DICT and re.match(r'^[A-Z]+$', ticker) and values[etf_column] == "N" and values[
-            test_column] == "N":
-            sec["ticker"] = ticker
-            sec["sector"] = UNKNOWN
-            sec["industry"] = UNKNOWN
-            sec["marketCap"] = UNKNOWN
-            sec["universe"] = exchange_from_symbol(values[exchange_column])
-            tickers[sec["ticker"]] = sec
+    # filtered_symbols = []
+    # for letter in string.ascii_uppercase:
+    #     letter_symbols = df[df['Symbol'].str.startswith(letter)].head(7)
+    #     filtered_symbols.extend(letter_symbols['Symbol'].tolist())
 
-    return tickers
-
-
-# SECURITIES = list(get_resolved_securities().values())[:120]
+    print(f"Retrieved {len(symbols_list)} symbols from NASDAQ")
+    return symbols_list
 
 
 def write_to_file(dict, file):
@@ -138,17 +89,7 @@ def write_price_history_file(char, tickers_dict):
         f_out.write(json_str.encode('utf-8'))
 
 
-# def write_ticker_info_file(info_dict):
-#     write_to_file(info_dict, TICKER_INFO_FILE)
-
-
-def enrich_ticker_data(ticker_response, security):
-    ticker_response["sector"] = security["sector"]
-    ticker_response["industry"] = security["industry"]
-    ticker_response["universe"] = security["universe"]
-
-
-def print_data_progress(ticker, universe, idx, securities, error_text, elapsed_s, remaining_s):
+def print_data_progress(ticker, idx, tickers, error_text, elapsed_s, remaining_s):
     dt_ref = datetime.fromtimestamp(0)
     dt_e = datetime.fromtimestamp(elapsed_s)
     elapsed = dateutil.relativedelta.relativedelta(dt_e, dt_ref)
@@ -159,7 +100,7 @@ def print_data_progress(ticker, universe, idx, securities, error_text, elapsed_s
     else:
         remaining_string = "?"
     print(
-        f'{ticker} from {universe}{error_text} ({idx + 1} / {len(securities)}). Elapsed: {elapsed.hours}h {elapsed.minutes}m {elapsed.seconds}s. Remaining: {remaining_string}.')
+        f'{ticker} from {error_text} ({idx + 1} / {len(tickers)}). Elapsed: {elapsed.hours}h {elapsed.minutes}m {elapsed.seconds}s. Remaining: {remaining_string}.')
 
 
 def get_remaining_seconds(all_load_times, idx, len):
@@ -168,43 +109,8 @@ def get_remaining_seconds(all_load_times, idx, len):
     return remaining_seconds
 
 
-def escape_ticker(ticker):
-    return ticker.replace(".", "-")
-
-
-def get_info_from_dict(dict, key):
-    value = dict[key] if key in dict else "n/a"
-    # fix unicode
-    # value = value.replace("\u2014", " ")
-    return value
-
-
-def load_ticker_info(ticker, info_dict):
-    escaped_ticker = escape_ticker(ticker)
-    info = yf.Ticker(escaped_ticker)
-    try:
-        ticker_info = {
-            "info": {
-                "industry": get_info_from_dict(info.info, "industry"),
-                "sector": get_info_from_dict(info.info, "sector"),
-                "marketCap": get_info_from_dict(info.info, "marketCap")
-            }
-        }
-    except Exception:
-        ticker_info = {
-            "info": {
-                "industry": "n/a",
-                "sector": "n/a",
-                "marketCap": "n/a"
-            }
-        }
-    info_dict[ticker] = ticker_info
-
-
-def get_yf_data(security, start_date, end_date):
+def get_yf_data(ticker, start_date, end_date):
     ticker_data = {}
-    ticker = security["ticker"]
-    escaped_ticker = escape_ticker(ticker)
 
     try:
         # Import the random user agent function
@@ -232,7 +138,7 @@ def get_yf_data(security, start_date, end_date):
 
         # Download data with auto_adjust=False (based on Reddit fix) and using our custom session
         df = yf.download(
-            escaped_ticker,
+            ticker,
             start=start_date,
             end=end_date,
             auto_adjust=False,
@@ -282,7 +188,6 @@ def get_yf_data(security, start_date, end_date):
             candles.append(candle)
 
         ticker_data["candles"] = candles
-        enrich_ticker_data(ticker_data, security)
         return ticker_data
     except Exception as e:
         print(f"Error downloading data for {ticker}: {str(e)}")
@@ -310,10 +215,9 @@ def get_yf_data(security, start_date, end_date):
 
 
 def load_prices_from_yahoo(char):
-    print("*** Loading Stocks from Yahoo Finance ***")
     today = date.today()
     start = time.time()
-    start_date = today - dt.timedelta(days=1 * 365 + 183)  # 183 = 6 months
+    start_date = today - dt.timedelta(days=5 * 365)
     tickers_dict = {}
     load_times = []
     failed_tickers = []
@@ -322,19 +226,14 @@ def load_prices_from_yahoo(char):
     max_retries = 2
     base_delay = 2  # seconds
 
-    securities = [
-        security for security in get_resolved_securities().values()
-        if (security["ticker"] == "SPY" or
-            (security["ticker"] in TICKER_INFO_DICT and security["ticker"].lower().startswith(char.lower())))
-    ]
+    tickers = ([ticker for ticker in get_tickers_from_nasdaq()
+                if (ticker == "SPY" or ticker.lower().startswith(char.lower()))]
+               + [REFERENCE_TICKER])
 
-    for idx, security in enumerate(securities):
-        ticker = security["ticker"]
+    print("*** Loading Stocks from Yahoo Finance ***")
+    for idx, ticker in enumerate(tickers):
         retry_count = 0
         success = False
-
-        if ticker != "SPY" and not ticker in TICKER_INFO_DICT:
-            continue
 
         while retry_count < max_retries and not success:
             r_start = time.time()
@@ -346,7 +245,7 @@ def load_prices_from_yahoo(char):
                 time.sleep(retry_delay)
 
             # Use the updated get_yf_data function
-            ticker_data = get_yf_data(security, start_date, today)
+            ticker_data = get_yf_data(ticker, start_date, today)
 
             # If successful, mark as success and break retry loop
             if ticker_data is not None:
@@ -360,43 +259,15 @@ def load_prices_from_yahoo(char):
             failed_tickers.append(ticker)
             continue
 
-        # # Add industry info if available
-        # if not ticker in TICKER_INFO_DICT:
-        #     try:
-        #         load_ticker_info(ticker, TICKER_INFO_DICT)
-        #         write_ticker_info_file(TICKER_INFO_DICT)
-        #     except Exception as e:
-        #         print(f"Error loading ticker info for {ticker}: {str(e)}")
-
-        # # Add industry data safely with error handling
-        # try:
-        #     ticker_data["industry"] = TICKER_INFO_DICT[ticker]["info"]["industry"]
-        # except (KeyError, TypeError):
-        #     # Set a default if industry info is missing
-        #     ticker_data["industry"] = "Unknown"
-        #     print(f"Warning: Could not find industry information for {ticker}")
-
         # Track timing and progress
         now = time.time()
         current_load_time = now - r_start
         load_times.append(current_load_time)
-        remaining_seconds = get_remaining_seconds(load_times, idx, len(securities))
-        print_data_progress(ticker, security["universe"], idx, securities, "", time.time() - start, remaining_seconds)
+        remaining_seconds = get_remaining_seconds(load_times, idx, len(tickers))
+        print_data_progress(ticker, idx, tickers, "", time.time() - start, remaining_seconds)
 
         # Add to results dictionary
         tickers_dict[ticker] = ticker_data
-
-        # # Periodically save results to avoid losing everything if the process fails
-        # if idx > 0 and idx % 100 == 0:
-        #     print(f"Saving intermediate results after {idx} tickers...")
-        #     write_price_history_file(tickers_dict)
-
-    # # Report on failures
-    # if failed_tickers:
-    #     print(f"Failed for {len(failed_tickers)} tickers: {', '.join(failed_tickers[:10])}...")
-    #     with open("failed_tickers.txt", "w") as f:
-    #         f.write("\n".join(failed_tickers))
-    #     print(f"Saved list of failed tickers to failed_tickers.txt")
 
     # Write results to file
     write_price_history_file(char, tickers_dict)
@@ -405,9 +276,8 @@ def load_prices_from_yahoo(char):
 
 
 def main():
-    char = None if len(sys.argv) <= 1 else sys.argv[1]
+    char = "a" if len(sys.argv) <= 1 else sys.argv[1]
     load_prices_from_yahoo(char)
-    # write_ticker_info_file(TICKER_INFO_DICT)
 
 
 if __name__ == "__main__":
