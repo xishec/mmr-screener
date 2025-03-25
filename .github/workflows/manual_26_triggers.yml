@@ -16,7 +16,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+            const alphabet = 'xyz';
             const promises = alphabet.split('').map(async (char) => {
               await github.rest.actions.createWorkflowDispatch({
                 owner: context.repo.owner,
@@ -51,7 +51,7 @@ jobs:
                   ref: 'main'
                 });
               } else {
-                setTimeout(checkWorkflowsCompletion, 5000);
+                setTimeout(checkWorkflowsCompletion, 1000);
               }
             }
             
