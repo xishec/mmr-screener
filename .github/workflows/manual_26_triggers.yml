@@ -26,13 +26,13 @@ jobs:
                 inputs: { char }
               });
             });
-            
+      
             await Promise.all(promises);
-            
+      
             async function sleep(ms) {
               return new Promise(resolve => setTimeout(resolve, ms));
             }
-            
+      
             async function checkWorkflowsCompletion() {
               let incompleteRuns = [];
               do {
@@ -43,15 +43,14 @@ jobs:
                   per_page: 100,
                   workflow_id: 'update_data.yml'
                 });
-                // Access the workflow runs from runsResponse.data.workflow_runs
                 const workflowRuns = runsResponse.data.workflow_runs;
                 console.log("Total workflow runs:", workflowRuns.length);
                 incompleteRuns = workflowRuns.filter(run =>
-                  run.status !== 'completed' && run.id !== context.runId
+                  run.id !== context.runId && (run.status === 'queued' || run.status === 'in_progress')
                 );
                 console.log("Incomplete runs:", incompleteRuns.length);
               } while (incompleteRuns.length > 0);
-            
+      
               console.log('done');
               await github.rest.actions.createWorkflowDispatch({
                 owner: context.repo.owner,
@@ -60,5 +59,5 @@ jobs:
                 ref: 'main'
               });
             }
-            
+      
             await checkWorkflowsCompletion();
