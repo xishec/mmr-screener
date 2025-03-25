@@ -16,7 +16,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const alphabet = 'xyz';
+            const alphabet = 'yz';
             const promises = alphabet.split('').map(async (char) => {
               await github.rest.actions.createWorkflowDispatch({
                 owner: context.repo.owner,
@@ -40,13 +40,14 @@ jobs:
                 const runsResponse = await github.rest.actions.listWorkflowRunsForRepo({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
+                  per_page: 100,
                   workflow_id: 'update_data.yml'
                 });
                 // Access the workflow runs from runsResponse.data.workflow_runs
                 const workflowRuns = runsResponse.data.workflow_runs;
                 console.log("Total workflow runs:", workflowRuns.length);
                 incompleteRuns = workflowRuns.filter(run =>
-                  run.status !== 'completed' && run.id !== context.runId
+                  run.status !== 'completed'
                 );
                 console.log("Incomplete runs:", incompleteRuns.length);
               } while (incompleteRuns.length > 0);
