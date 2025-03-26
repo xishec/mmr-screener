@@ -25,7 +25,9 @@ except yaml.YAMLError as exc:
     print(exc)
 
 try:
-    with open('../config.yaml', 'r') as stream:
+    file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                             'config.yaml')
+    with open(file_path, 'r') as stream:
         config = yaml.safe_load(stream)
 except FileNotFoundError:
     config = None

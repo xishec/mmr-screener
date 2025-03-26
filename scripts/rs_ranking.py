@@ -3,7 +3,6 @@ import json
 import os
 import string
 import sys
-from typing import Any
 
 import yaml
 from rs_data import cfg
@@ -11,7 +10,7 @@ import screen_stocks
 import pandas as pd
 import datetime
 
-DIR = os.path.dirname(os.path.realpath(__file__))
+DIR = os.path.dirname(os.path.abspath(__file__))
 pd.set_option('display.max_rows', None)
 pd.set_option('display.width', None)
 pd.set_option('display.max_columns', None)
@@ -72,54 +71,41 @@ def quarters_perf(closes: pd.Series, n):
 
 def rankings(PRICE_DATA, end_date):
     relative_strengths = []
-    ranks = []
     stock_rs = {}
     total = len(PRICE_DATA)
+    closes_ref = pd.Series([candle["close"] for candle in PRICE_DATA[REFERENCE_TICKER]["candles"]])
+
     for i, (ticker, data) in enumerate(PRICE_DATA.items()):
         print(f"\rCalculating ranking for {ticker:>5}, {i + 1:>5} / {total:>5}, {(i + 1) / total * 100:>6.2f}% ",
               end="", flush=True)
         try:
-            closes = list(map(lambda candle: candle["close"], data["candles"]))
-            closes_ref = list(map(lambda candle: candle["close"], PRICE_DATA[REFERENCE_TICKER]["candles"]))
+            closes = pd.Series([candle["close"] for candle in data["candles"]])
             if len(closes) >= 6 * 20:
-                closes_series = pd.Series(closes)
-                closes_ref_series = pd.Series(closes_ref)
-                rs = relative_strength(closes_series, closes_ref_series)
+                rs = relative_strength(closes, closes_ref)
                 month = 20
                 tmp_percentile = 100
-                rs1m = relative_strength(closes_series.head(-1 * month), closes_ref_series.head(-1 * month))
-                rs3m = relative_strength(closes_series.head(-3 * month), closes_ref_series.head(-3 * month))
-                rs6m = relative_strength(closes_series.head(-6 * month), closes_ref_series.head(-6 * month))
+                rs1m = relative_strength(closes.head(-1 * month), closes_ref.head(-1 * month))
+                rs3m = relative_strength(closes.head(-3 * month), closes_ref.head(-3 * month))
+                rs6m = relative_strength(closes.head(-6 * month), closes_ref.head(-6 * month))
 
-                # if rs is too big assume there is faulty price data
                 if rs < 590:
-                    # stocks output
-                    ranks.append(len(ranks) + 1)
-                    relative_strengths.append(
-                        (0, ticker, rs, tmp_percentile, rs1m,
-                         rs3m, rs6m))
+                    relative_strengths.append((ticker, rs, tmp_percentile, rs1m, rs3m, rs6m))
                     stock_rs[ticker] = rs
         except KeyError:
             print(f'Ticker {ticker} has corrupted data.')
     print()
-    dfs = []
 
-    # stocks
     df = pd.DataFrame(relative_strengths,
-                      columns=[TITLE_RANK, TITLE_TICKER, TITLE_RS, TITLE_PERCENTILE, TITLE_1M, TITLE_3M, TITLE_6M])
+                      columns=[TITLE_TICKER, TITLE_RS, TITLE_PERCENTILE, TITLE_1M, TITLE_3M, TITLE_6M])
     df[TITLE_PERCENTILE] = pd.qcut(df[TITLE_RS], 100, labels=False, duplicates="drop")
     df[TITLE_1M] = pd.qcut(df[TITLE_1M], 100, labels=False, duplicates="drop")
     df[TITLE_3M] = pd.qcut(df[TITLE_3M], 100, labels=False, duplicates="drop")
     df[TITLE_6M] = pd.qcut(df[TITLE_6M], 100, labels=False, duplicates="drop")
-    df = df.sort_values(([TITLE_RS]), ascending=False)
-    df[TITLE_RANK] = ranks
-    out_tickers_count = 0
-    for index, row in df.iterrows():
-        if row[TITLE_PERCENTILE] >= MIN_PERCENTILE:
-            out_tickers_count = out_tickers_count + 1
-    df = df.head(out_tickers_count)
+    df = df.sort_values(([TITLE_RS]), ascending=False).reset_index(drop=True)
+    df[TITLE_RANK] = df.index + 1
 
-    # Add with ChatGPT------
+    df = df[df[TITLE_PERCENTILE] >= MIN_PERCENTILE]
+
     # Create a list of desired percentiles
     percentile_values = [98, 89, 69, 49, 29, 9, 1]
 
@@ -128,25 +114,22 @@ def rankings(PRICE_DATA, end_date):
 
     # Iterate through the desired percentiles
     for percentile in percentile_values:
-        # Check if there are any rows matching the condition
         matching_rows = df[df[TITLE_PERCENTILE] == percentile]
         if matching_rows.empty:
             print(f"No rows match the condition for percentile {percentile}.")
             continue
 
-        # Find the first row in the DataFrame where TITLE_PERCENTILE matches the desired percentile
-        first_row = df[df[TITLE_PERCENTILE] == percentile].iloc[0]
-
-        # Get the value of df[TITLE_RS] for this row
+        first_row = matching_rows.iloc[0]
         rs_value = first_row[TITLE_RS]
-
-        # Store the rs_value in the dictionary with the percentile as the key
         first_rs_values[percentile] = rs_value
 
-    df.to_csv(os.path.join(DIR, f'../output/rs_stocks_{end_date}.csv'), index=False)
-    dfs.append(df)
+    output_dir = os.path.join(os.path.dirname(DIR), 'output')
+    os.makedirs(output_dir, exist_ok=True)
 
-    return dfs
+    output_path = os.path.join(output_dir, f'rs_stocks_{end_date}.csv')
+    df.to_csv(output_path, index=False)
+
+    return [df]
 
 
 def find_closest_date(PRICE_DATA, target_date_str):
@@ -155,13 +138,13 @@ def find_closest_date(PRICE_DATA, target_date_str):
     for data in PRICE_DATA.values():
         candles = data.get("candles", [])
         if candles:
-            idx, closest_candle = min(enumerate(candles), key=lambda x: abs(x[1]["datetime"] - target_ts))
-            return idx, closest_candle["datetime"]
+            _, closest_candle = min(enumerate(candles), key=lambda x: abs(x[1]["datetime"] - target_ts))
+            return closest_candle["datetime"]
 
-    return None, None
+    return None
 
 
-def filter_price_data_by_index(price_data: dict, idx: int) -> dict:
+def filter_price_data_by_index(price_data: dict, timestamp: int) -> dict:
     filtered_data = {}
     for ticker, data in price_data.items():
         candles = data.get("candles", [])
@@ -175,22 +158,37 @@ def filter_price_data_by_index(price_data: dict, idx: int) -> dict:
 
 
 def load_data():
-    PRICE_DATA = {}
+    """Load price history data in parallel using ThreadPoolExecutor for faster processing."""
+    import concurrent.futures
 
-    for i, char in enumerate(string.ascii_lowercase):
-        print(f"\rLoading data strating with {char.upper()} ", end="", flush=True)
-        file_path = f'../data_persist/{char}_price_history.json.gz'
+    def load_file(char):
         try:
+            file_path = os.path.join(os.path.dirname(DIR), 'data_persist', f'{char}_price_history.json.gz')
             with gzip.open(file_path, 'rb') as f_in:
-                data = json.loads(f_in.read().decode('utf-8'))
+                return json.loads(f_in.read().decode('utf-8'))
+        except Exception as e:
+            print(f"Error loading file for '{char}': {e}")
+            return {}
+
+    PRICE_DATA = {}
+    chars = list(string.ascii_lowercase)
+
+    print("Loading price data in parallel...")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(26, len(chars))) as executor:
+        future_to_char = {executor.submit(load_file, char): char for char in chars}
+
+        for i, future in enumerate(concurrent.futures.as_completed(future_to_char)):
+            char = future_to_char[future]
+            print(f"\rLoading: {i + 1}/{len(chars)} files processed ({char.upper()})", end="", flush=True)
+            data = future.result()
+            if data:
                 PRICE_DATA.update(data)
-        except:
-            print(f"File not found: {char}")
-    print()
+
+    print(f"\nLoaded price data for {len(PRICE_DATA)} tickers")
     return PRICE_DATA
 
 
-def ma1in(PRICE_DATA=None, date_override=None):
+def main(PRICE_DATA=None, date_override=None):
     if PRICE_DATA is None:
         PRICE_DATA = load_data()
 
@@ -200,21 +198,18 @@ def ma1in(PRICE_DATA=None, date_override=None):
     if len(sys.argv) > 1:
         date = sys.argv[1]
 
-    idx, timestamp = find_closest_date(PRICE_DATA, date)
-    filtered_price_date = filter_price_data_by_index(PRICE_DATA, idx)
+    timestamp = find_closest_date(PRICE_DATA, date)
+    filtered_price_date = filter_price_data_by_index(PRICE_DATA, timestamp)
     start_date = (datetime.datetime.fromtimestamp(filtered_price_date["A"]["candles"][0]["datetime"])
                   .strftime("%Y-%m-%d"))
     end_date = (datetime.datetime.fromtimestamp(filtered_price_date["A"]["candles"][-1]["datetime"])
                 .strftime('%Y-%m-%d'))
-    print(f"Considering stocks from {start_date} to {end_date}")
+    print(f"Considering data from {start_date} to {end_date}")
 
     rankings(filtered_price_date, end_date)
     screen_stocks.main(filtered_price_date, end_date)
 
 
-def main():
-    PRICE_DATA = load_data()
-
-
 if __name__ == "__main__":
     main()
+
