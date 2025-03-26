@@ -1,6 +1,4 @@
-Ticker,Market Cap,Close Price,Above SMA20,Above SMA200,Date,Price Change,Volume Change 100,Volume Change 3,Sell Date,Holding Duration,Profit,Held Days
-BROS, 10.92B,  41.46$,  9.10%, 38.97%,2024-06-25, 2.39%, 94.34%, 33.87%,2024-07-09,N/A,-4.8239%,14
-FDX, 58.44B, 296.19$, 17.45%, 16.12%,2024-06-25, 2.62%,508.12%, 72.61%,2024-07-22,N/A,1.5564%,27
-FER, 32.61B,  39.80$,  0.10%,  9.49%,2024-06-25, 1.43%,610.51%, 77.86%,2024-06-26,N/A,-1.2563%,1
-GFL, 18.95B,  38.40$,  6.31%, 16.34%,2024-06-25, 2.01%, 67.78%, 66.85%,2024-07-09,N/A,0.2083%,14
-AVERAGE,,,,,,,,,,,-1.0789%,14.00
+Ticker,Market Cap,Close Price,Above SMA20,Above SMA200,Date,Price Change,Volume Change 100,Sell Date,Holding Duration,Profit,Held Days
+ALNY, 35.39B, 245.17$, 48.61%, 48.06%,2024-06-25, 3.05%,216.53%,2024-07-15,N/A,1.9007%,20
+FDX, 58.18B, 296.19$, 17.45%, 16.12%,2024-06-25, 2.62%,508.12%,2024-07-22,N/A,1.5564%,27
+AVERAGE,,,,,,,,,,1.7286%,23.50

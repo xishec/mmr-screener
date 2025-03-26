@@ -18,7 +18,7 @@ def calculate_sma(prices, window):
 
 def screen_stocks(PRICE_DATA):
     # Set the starting date as 5 years ago from today
-    current_date = datetime.date.today() - relativedelta(years=1)
+    current_date = datetime.date.today() - relativedelta(years=2)
     today = datetime.date.today()
 
     # Loop over each month from start to today
@@ -31,7 +31,7 @@ def screen_stocks(PRICE_DATA):
         rs_ranking.main(PRICE_DATA, date_str)
 
         # Increment the date by one month
-        current_date += relativedelta(months=3)
+        current_date += relativedelta(months=1)
 
 
 import datetime
@@ -130,8 +130,11 @@ def back_test(PRICE_DATA):
                 writer = csv.DictWriter(csv_out, fieldnames=header)
                 writer.writeheader()
                 writer.writerows(rows)
-    print(f"Global Average Holding Days: {sum(global_holding_days) / len(global_holding_days):.2f}")
-    print(f"Global Average Profit: {sum(global_profits) / len(global_profits) * 100:.4f}%")
+
+    if len(global_holding_days) > 0 and len(global_profits) > 0:
+        print(f"Global Average Holding Days: {sum(global_holding_days) / len(global_holding_days):.2f}")
+        print(f"Global Average Profit: {sum(global_profits) / len(global_profits) * 100:.4f}%")
+
 
 def main():
     PRICE_DATA = rs_ranking.load_data()

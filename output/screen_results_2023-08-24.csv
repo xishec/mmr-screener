@@ -1,0 +1,5 @@
+Ticker,Market Cap,Close Price,Above SMA20,Above SMA200,Date,Price Change,Volume Change 100,Sell Date,Holding Duration,Profit,Held Days
+AFRM, 15.63B,  17.79$, 12.00%, 32.39%,2023-08-24,15.18%,461.82%,2023-09-20,N/A,19.4491%,27
+ASX, 20.73B,   8.20$,  6.87%, 11.66%,2023-08-24, 3.17%,122.41%,2023-09-07,N/A,-4.2683%,14
+WDAY, 67.11B, 236.97$,  3.14%, 23.06%,2023-08-24, 3.62%,187.74%,2023-09-13,N/A,3.4224%,20
+AVERAGE,,,,,,,,,,6.2011%,20.33

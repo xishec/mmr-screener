@@ -4,11 +4,37 @@ import yfinance as yf
 import csv
 import time
 import pandas as pd
+import json
 
 DIR = os.path.dirname(os.path.realpath(__file__))
+OUTPUT_DIR = os.path.join(os.path.dirname(DIR), 'output')
+CACHE_FILE = os.path.join(OUTPUT_DIR, 'market_cap_cache.json')
+
 pd.set_option('display.max_rows', None)
 pd.set_option('display.width', None)
 pd.set_option('display.max_columns', None)
+
+
+# Load cache on module load
+def load_market_cap_cache():
+    if os.path.exists(CACHE_FILE):
+        try:
+            with open(CACHE_FILE, "r", encoding="utf8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error loading market cap cache: {e}")
+    return {}
+
+
+def save_market_cap_cache():
+    try:
+        with open(CACHE_FILE, "w", encoding="utf8") as f:
+            json.dump(market_cap_cache, f)
+    except Exception as e:
+        print(f"Error saving market cap cache: {e}")
+
+
+market_cap_cache = load_market_cap_cache()
 
 
 # Load the first half of rs_stocks.csv
@@ -28,20 +54,25 @@ def calculate_sma(prices, window):
     return sum(close_prices[-window:]) / window
 
 
+def find_max_prices(prices, window):
+    close_prices = [candle['close'] for candle in prices['candles']]
+    if len(close_prices) < window:
+        return 0
+    return max(close_prices[-window:])
+
+
 def find_max_volume(prices, window):
     volumes = [candle['volume'] for candle in prices['candles']]
     if len(volumes) < window:
         return 0
-    return max(volumes[-window:]) / window
+    return max(volumes[-window:])
 
 
-# def calculate_recent_high_volume(prices, window):
-#     volumes = [(candle['volume'], candle['datetime']) for candle in prices['candles']]
-#     if len(volumes) < window:
-#         return None, None
-#     recent_volumes = volumes[-window:]
-#     max_volume, max_date = max(recent_volumes, key=lambda x: x[0])
-#     return max_volume, max_date
+def find_avg_volume(prices, window):
+    volumes = [candle['volume'] for candle in prices['candles']]
+    if len(volumes) < window:
+        return 0
+    return sum(volumes[-window:]) / window
 
 
 def get_change_on_date(prices, target_date):
@@ -52,13 +83,19 @@ def get_change_on_date(prices, target_date):
 
 
 def get_market_cap(ticker_symbol):
+    global market_cap_cache
+    # Check if market cap is already cached
+    if ticker_symbol in market_cap_cache:
+        return market_cap_cache[ticker_symbol]
+
     for _ in range(2):
         try:
             ticker = yf.Ticker(ticker_symbol)
             info = ticker.info
             market_cap = info.get("marketCap")
             if market_cap is None:
-                return 0
+                market_cap = 0
+            market_cap_cache[ticker_symbol] = market_cap
             return market_cap
         except Exception:
             time.sleep(2)
@@ -78,22 +115,22 @@ def screen(filtered_price_date, end_date):
 
         sma20 = calculate_sma(price_history[ticker], 22)
         sma200 = calculate_sma(price_history[ticker], 200)
+        max20 = find_max_prices(price_history[ticker], 22)
 
         latest_close_price = price_history[ticker]["candles"][-1]["close"]
         date = price_history[ticker]["candles"][-1]["datetime"]
         volume = price_history[ticker]["candles"][-1]["volume"]
-        average_volume100 = find_max_volume(price_history[ticker], 100)
-        average_volume3 = find_max_volume(price_history[ticker], 3)
+        avg_volume100 = find_avg_volume(price_history[ticker], 100)
+        max_volume5 = find_max_volume(price_history[ticker], 5)
         change = get_change_on_date(price_history[ticker], date) * 100
         above_sma20 = (latest_close_price - sma20) * 100 / sma20 if sma20 else 0
         above_sma200 = (latest_close_price - sma200) * 100 / sma200 if sma200 else 0
-        volume_change100 = (volume - average_volume100) * 100 / average_volume100 if average_volume100 else 0
-        volume_change3 = (volume - average_volume3) * 100 / average_volume3 if average_volume3 else 0
+        volume_change100 = (volume - avg_volume100) * 100 / avg_volume100 if avg_volume100 else 0
 
         if latest_close_price > sma20 and latest_close_price > sma200:
-            if change > 1 and volume > average_volume100 * 1.3 and volume > average_volume3 * 1.3:
+            if change > 2 and volume > avg_volume100 * 2:
                 market_cap_billion = get_market_cap(ticker) / 1e9
-                if 10 < market_cap_billion < 100:
+                if 10 < market_cap_billion < 150:
                     results.append(
                         (ticker,
                          f"{market_cap_billion:>6.2f}B",
@@ -103,20 +140,20 @@ def screen(filtered_price_date, end_date):
                          datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d'),
                          f"{change:>5.2f}%",
                          f"{volume_change100:>6.2f}%",
-                         f"{volume_change3:>6.2f}%",
                          "N/A", "N/A", "N/A")),
     print()
 
     # Write CSV file with defined column headers.
     df = pd.DataFrame(results,
                       columns=["Ticker", "Market Cap", "Close Price", "Above SMA20",
-                               "Above SMA200", "Date", "Price Change", "Volume Change 100", "Volume Change 3",
+                               "Above SMA200", "Date", "Price Change", "Volume Change 100",
                                "Sell Date", "Holding Duration", "Profit"])
     df = df.sort_values((["Ticker"]), ascending=True)
 
     output_path = os.path.join(os.path.dirname(DIR), 'output', f'screen_results_{end_date}.csv')
     df.to_csv(output_path, index=False)
     print(df)
+    save_market_cap_cache()
 
 
 def main(filtered_price_date=None, end_date=None):
