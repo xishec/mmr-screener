@@ -1,13 +1,9 @@
-import gzip
-import json
 import os
-import string
 import datetime
 import yfinance as yf
 import csv
 import time
 import pandas as pd
-from scripts import rs_ranking
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 pd.set_option('display.max_rows', None)
@@ -21,32 +17,31 @@ def load_csv(end_date):
     with open(path, mode='r') as csv_file:
         csv_reader = csv.reader(csv_file)
         rows = list(csv_reader)
-        header = rows[0]
-        first_half_rows = rows[1:len(rows) // 5 + 1]
+        first_half_rows = rows[1:len(rows) // 2 + 1]
     return first_half_rows
 
 
 def calculate_sma(prices, window):
     close_prices = [candle['close'] for candle in prices['candles']]
     if len(close_prices) < window:
-        return -1
+        return 0
     return sum(close_prices[-window:]) / window
 
 
-def calculate_average_volume(prices, window):
+def find_max_volume(prices, window):
     volumes = [candle['volume'] for candle in prices['candles']]
     if len(volumes) < window:
-        return -1
-    return sum(volumes[-window:]) / window
+        return 0
+    return max(volumes[-window:]) / window
 
 
-def calculate_recent_high_volume(prices, window):
-    volumes = [(candle['volume'], candle['datetime']) for candle in prices['candles']]
-    if len(volumes) < window:
-        return None, None
-    recent_volumes = volumes[-window:]
-    max_volume, max_date = max(recent_volumes, key=lambda x: x[0])
-    return max_volume, max_date
+# def calculate_recent_high_volume(prices, window):
+#     volumes = [(candle['volume'], candle['datetime']) for candle in prices['candles']]
+#     if len(volumes) < window:
+#         return None, None
+#     recent_volumes = volumes[-window:]
+#     max_volume, max_date = max(recent_volumes, key=lambda x: x[0])
+#     return max_volume, max_date
 
 
 def get_change_on_date(prices, target_date):
@@ -75,28 +70,30 @@ def screen(filtered_price_date, end_date):
     price_history = filtered_price_date
     results = []
 
-    filtered_rows = [row for row in first_half_rows if row[1] in price_history]
+    filtered_rows = [row for row in first_half_rows if row[0] in price_history]
     total = len(filtered_rows)
     for i, row in enumerate(filtered_rows):
-        ticker = row[1]
+        ticker = row[0]
         print(f"Screening stocks {ticker} \r{i + 1} / {total}, {(i + 1) / total * 100:.2f}% ", end="", flush=True)
 
         sma20 = calculate_sma(price_history[ticker], 22)
         sma200 = calculate_sma(price_history[ticker], 200)
 
         latest_close_price = price_history[ticker]["candles"][-1]["close"]
-        recent_high_volume, date = calculate_recent_high_volume(price_history[ticker], 2)
-        average_volume = calculate_average_volume(price_history[ticker], 100)
+        date = price_history[ticker]["candles"][-1]["datetime"]
+        volume = price_history[ticker]["candles"][-1]["volume"]
+        average_volume100 = find_max_volume(price_history[ticker], 100)
+        average_volume3 = find_max_volume(price_history[ticker], 3)
         change = get_change_on_date(price_history[ticker], date) * 100
-        above_sma20 = (latest_close_price - sma20) * 100 / sma20
-        above_sma200 = (latest_close_price - sma200) * 100 / sma200
-        volume_change = (recent_high_volume - average_volume) * 100 / average_volume
+        above_sma20 = (latest_close_price - sma20) * 100 / sma20 if sma20 else 0
+        above_sma200 = (latest_close_price - sma200) * 100 / sma200 if sma200 else 0
+        volume_change100 = (volume - average_volume100) * 100 / average_volume100 if average_volume100 else 0
+        volume_change3 = (volume - average_volume3) * 100 / average_volume3 if average_volume3 else 0
 
-        if latest_close_price > sma20 and latest_close_price > sma200 * 1.2:
-            if change > 1 and recent_high_volume > average_volume * 2:
-                marketCap = get_market_cap(ticker)
-                market_cap_billion = marketCap / 1e9
-                if 10e9 < marketCap < 200e9:
+        if latest_close_price > sma20 and latest_close_price > sma200:
+            if change > 1 and volume > average_volume100 * 1.3 and volume > average_volume3 * 1.3:
+                market_cap_billion = get_market_cap(ticker) / 1e9
+                if 10 < market_cap_billion < 100:
                     results.append(
                         (ticker,
                          f"{market_cap_billion:>6.2f}B",
@@ -105,13 +102,16 @@ def screen(filtered_price_date, end_date):
                          f"{above_sma200:>6.2f}%",
                          datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d'),
                          f"{change:>5.2f}%",
-                         f"{volume_change:>6.2f}%"))
+                         f"{volume_change100:>6.2f}%",
+                         f"{volume_change3:>6.2f}%",
+                         "N/A", "N/A", "N/A")),
     print()
 
     # Write CSV file with defined column headers.
     df = pd.DataFrame(results,
                       columns=["Ticker", "Market Cap", "Close Price", "Above SMA20",
-                               "Above SMA200", "Date", "Price Change", "Volume Change"])
+                               "Above SMA200", "Date", "Price Change", "Volume Change 100", "Volume Change 3",
+                               "Sell Date", "Holding Duration", "Profit"])
     df = df.sort_values((["Ticker"]), ascending=True)
 
     output_path = os.path.join(os.path.dirname(DIR), 'output', f'screen_results_{end_date}.csv')
@@ -120,12 +120,8 @@ def screen(filtered_price_date, end_date):
 
 
 def main(filtered_price_date=None, end_date=None):
-    if filtered_price_date is None:
-        filtered_price_date = rs_ranking.load_data()
-
-    today = datetime.date.today().strftime("%Y-%m-%d")
-    date = today if end_date is None else end_date
-    screen(filtered_price_date, date)
+    if filtered_price_date is not None and end_date is not None:
+        screen(filtered_price_date, end_date)
 
 
 if __name__ == "__main__":

@@ -1,1 +1,4 @@
-Ticker,Market Cap,Close Price,Above SMA20,Above SMA200,Date,Price Change,Volume Change
+Ticker,Market Cap,Close Price,Above SMA20,Above SMA200,Date,Price Change,Volume Change 100,Volume Change 3,Sell Date,Holding Duration,Profit,Held Days
+GME, 13.04B,  32.99$, 12.87%, 49.08%,2024-12-25, 1.12%, 99.85%, 79.33%,2025-01-12,N/A,-5.9715%,18
+PAYX, 54.37B, 142.64$,  0.34%,  9.95%,2024-12-25, 1.10%, 36.69%, 48.86%,2024-12-29,N/A,-1.8789%,4
+AVERAGE,,,,,,,,,,,-3.9252%,11.00
