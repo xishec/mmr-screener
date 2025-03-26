@@ -115,22 +115,22 @@ def screen(filtered_price_date, end_date):
 
         sma20 = calculate_sma(price_history[ticker], 22)
         sma200 = calculate_sma(price_history[ticker], 200)
-        max20 = find_max_prices(price_history[ticker], 22)
+        recent_max_close = find_max_prices(price_history[ticker], 20)
 
         latest_close_price = price_history[ticker]["candles"][-1]["close"]
         date = price_history[ticker]["candles"][-1]["datetime"]
         volume = price_history[ticker]["candles"][-1]["volume"]
         avg_volume100 = find_avg_volume(price_history[ticker], 100)
-        max_volume5 = find_max_volume(price_history[ticker], 5)
+        recent_max_volume = find_max_volume(price_history[ticker], 20)
         change = get_change_on_date(price_history[ticker], date) * 100
         above_sma20 = (latest_close_price - sma20) * 100 / sma20 if sma20 else 0
         above_sma200 = (latest_close_price - sma200) * 100 / sma200 if sma200 else 0
         volume_change100 = (volume - avg_volume100) * 100 / avg_volume100 if avg_volume100 else 0
 
-        if latest_close_price > sma20 and latest_close_price > sma200:
-            if change > 2 and volume > avg_volume100 * 2:
+        if latest_close_price > sma20 and latest_close_price > sma200 and latest_close_price == recent_max_close:
+            if change > 2 and volume > avg_volume100 * 2 and volume == recent_max_volume:
                 market_cap_billion = get_market_cap(ticker) / 1e9
-                if 10 < market_cap_billion < 150:
+                if 10 < market_cap_billion < 200:
                     results.append(
                         (ticker,
                          f"{market_cap_billion:>6.2f}B",
@@ -146,13 +146,19 @@ def screen(filtered_price_date, end_date):
     # Write CSV file with defined column headers.
     df = pd.DataFrame(results,
                       columns=["Ticker", "Market Cap", "Close Price", "Above SMA20",
-                               "Above SMA200", "Date", "Price Change", "Volume Change 100",
+                               "Above SMA200", "Date", "Latest Close Price Change", "Latest Volume Change avg100",
                                "Sell Date", "Holding Duration", "Profit"])
     df = df.sort_values((["Ticker"]), ascending=True)
 
-    output_path = os.path.join(os.path.dirname(DIR), 'output', f'screen_results_{end_date}.csv')
-    df.to_csv(output_path, index=False)
-    print(df)
+    output_path = os.path.join(os.path.dirname(DIR), 'output', 'screen_results.csv')
+    if not os.path.exists(output_path):
+        df.to_csv(output_path, index=False)
+    else:
+        df.to_csv(output_path, index=False, mode='a', header=False)
+    if(len(df)>0):
+        print(df)
+    else:
+        print("No stocks found")
     save_market_cap_cache()
 
 
@@ -163,3 +169,4 @@ def main(filtered_price_date=None, end_date=None):
 
 if __name__ == "__main__":
     main()
+

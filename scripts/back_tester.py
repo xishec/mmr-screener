@@ -25,7 +25,6 @@ def screen_stocks(PRICE_DATA):
     while current_date <= today:
         # Format the date as "YYYY-MM-DD"
         date_str = current_date.strftime("%Y-%m-%d")
-        print(f"Running rs_ranking.main for date: {date_str}")
 
         # Call the function with the date override argument
         rs_ranking.main(PRICE_DATA, date_str)
@@ -78,58 +77,53 @@ def check_stop_loss(start_timestamp, candles_dict):
 def back_test(PRICE_DATA):
     DIR = os.path.dirname(os.path.realpath(__file__))
     output_dir = os.path.join(os.path.dirname(DIR), 'output')
+    file_path = os.path.join(output_dir, 'screen_results.csv')
     global_holding_days = []
     global_profits = []
-    for file_name in os.listdir(output_dir):
-        # Process all CSV files starting with 'screen_results_'
-        if file_name.startswith("screen_results_") and file_name.endswith(".csv"):
-            date_str = file_name[len("screen_results_"):-len(".csv")]
-            file_path = os.path.join(output_dir, file_name)
-            with open(file_path, mode="r", newline="") as csv_file:
-                reader = csv.DictReader(csv_file)
-                rows = list(reader)
-            # Process each row to add Sell Date, Held Days and Profit
-            start_timestamp = int(datetime.datetime.strptime(date_str, "%Y-%m-%d").timestamp())
-            total_holding_days = 0
-            total_profit = 0
-            count = 0
-            has_average = False
-            for row in rows:
-                ticker = row["Ticker"]
-                if ticker == "AVERAGE":
-                    has_average = True
-                    continue
-                candles = PRICE_DATA[ticker]["candles"]
-                candles_dict = {str(candle["datetime"]): candle for candle in candles}
-                buy_timestamp, sell_timestamp, profit = check_stop_loss(start_timestamp, candles_dict)
-                sell_date = datetime.datetime.fromtimestamp(sell_timestamp).strftime("%Y-%m-%d")
-                row["Sell Date"] = sell_date
-                row["Profit"] = f"{profit * 100:.4f}%"
-                holding_days = (datetime.datetime.fromtimestamp(sell_timestamp) - datetime.datetime.fromtimestamp(
-                    buy_timestamp)).days
-                row["Held Days"] = holding_days
-                total_holding_days += holding_days
-                total_profit += profit
-                count += 1
-                global_holding_days.append(holding_days)
-                global_profits.append(profit)
 
-            # Append a summary row for averages, if any rows processed
-            if count > 0 and not has_average:
-                avg_held = total_holding_days / count
-                avg_profit = total_profit / count
-                summary = {col: "" for col in rows[0].keys()}
-                summary["Ticker"] = "AVERAGE"
-                summary["Held Days"] = f"{avg_held:.2f}"
-                summary["Profit"] = f"{avg_profit * 100:.4f}%"
-                rows.append(summary)
+    with open(file_path, mode="r", newline="") as csv_file:
+        reader = csv.DictReader(csv_file)
+        rows = list(reader)
 
-            # Rewrite the CSV file with new columns
-            header = list(rows[0].keys()) if rows else []
-            with open(file_path, mode="w", newline="") as csv_out:
-                writer = csv.DictWriter(csv_out, fieldnames=header)
-                writer.writeheader()
-                writer.writerows(rows)
+    total_holding_days = 0
+    total_profit = 0
+    count = 0
+    has_average = False
+    for row in rows:
+        if row["Ticker"] == "AVERAGE":
+            has_average = True
+            continue
+
+        screening_date = row["Date"]
+        start_timestamp = int(datetime.datetime.strptime(screening_date, "%Y-%m-%d").timestamp())
+        candles = PRICE_DATA[row["Ticker"]]["candles"]
+        candles_dict = {str(candle["datetime"]): candle for candle in candles}
+        buy_timestamp, sell_timestamp, profit = check_stop_loss(start_timestamp, candles_dict)
+        sell_date = datetime.datetime.fromtimestamp(sell_timestamp).strftime("%Y-%m-%d")
+        row["Sell Date"] = sell_date
+        row["Profit"] = f"{profit * 100:.4f}%"
+        holding_days = (datetime.datetime.fromtimestamp(sell_timestamp) - datetime.datetime.fromtimestamp(buy_timestamp)).days
+        row["Holding Duration"] = holding_days
+        total_holding_days += holding_days
+        total_profit += profit
+        count += 1
+        global_holding_days.append(holding_days)
+        global_profits.append(profit)
+
+    if count > 0 and not has_average:
+        avg_held = total_holding_days / count
+        avg_profit = total_profit / count
+        summary = {col: "" for col in rows[0].keys()}
+        summary["Ticker"] = "AVERAGE"
+        summary["Holding Duration"] = f"{avg_held:.2f}"
+        summary["Profit"] = f"{avg_profit * 100:.4f}%"
+        rows.append(summary)
+
+    with open(file_path, mode="w", newline="") as csv_out:
+        header = list(rows[0].keys()) if rows else []
+        writer = csv.DictWriter(csv_out, fieldnames=header)
+        writer.writeheader()
+        writer.writerows(rows)
 
     if len(global_holding_days) > 0 and len(global_profits) > 0:
         print(f"Global Average Holding Days: {sum(global_holding_days) / len(global_holding_days):.2f}")
@@ -144,3 +138,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
