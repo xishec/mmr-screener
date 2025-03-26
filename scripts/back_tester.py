@@ -18,8 +18,8 @@ def calculate_sma(prices, window):
 
 def screen_stocks(PRICE_DATA):
     # Set the starting date as 5 years ago from today
-    current_date = datetime.date.today() - relativedelta(years=3)
-    today = datetime.date.today()
+    current_date = datetime.datetime.strptime("2025-01-01", "%Y-%m-%d") - relativedelta(years=3)
+    today = datetime.datetime.today()  # changed from datetime.date.today()
 
     # Loop over each month from start to today
     while current_date <= today:
@@ -30,7 +30,7 @@ def screen_stocks(PRICE_DATA):
         rs_ranking.main(PRICE_DATA, date_str)
 
         # Increment the date by one month
-        current_date += relativedelta(months=0.2)
+        current_date += relativedelta(days=10)
 
 
 import datetime
