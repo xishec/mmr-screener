@@ -77,28 +77,38 @@ def check_stop_loss(start_timestamp, candles_dict):
 
 
 def back_test(PRICE_DATA):
-    results = {}
     output_dir = os.path.join("..", "output")
     for file_name in os.listdir(output_dir):
-        if file_name.startswith("screen_results_2022-03") and file_name.endswith(".csv"):
-            # Extract the date from the filename: everything between 'screen_results_' and '.csv'
+        # Process all CSV files starting with 'screen_results_'
+        if file_name.startswith("screen_results_") and file_name.endswith(".csv"):
             date_str = file_name[len("screen_results_"):-len(".csv")]
             file_path = os.path.join(output_dir, file_name)
             with open(file_path, mode="r", newline="") as csv_file:
                 reader = csv.DictReader(csv_file)
-                results[date_str] = list(reader)
+                rows = list(reader)
+            # Process each row to add Sell Date and Profit
+            start_timestamp = int(datetime.datetime.strptime(date_str, "%Y-%m-%d").timestamp())
+            for row in rows:
+                ticker = row["Ticker"]
+                candles = PRICE_DATA[ticker]["candles"]
+                candles_dict = {str(candle["datetime"]): candle for candle in candles}
+                buy_timestamp, sell_timestamp, profit = check_stop_loss(start_timestamp, candles_dict)
+                sell_date = datetime.datetime.fromtimestamp(sell_timestamp).strftime("%Y-%m-%d")
+                row["Sell Date"] = sell_date
+                row["Profit"] = profit
+                held_days = (datetime.datetime.fromtimestamp(sell_timestamp) - datetime.datetime.fromtimestamp(buy_timestamp)).days
+                print(f"Held {ticker} for {held_days} days with profit {profit}")
 
-    for date, screen_results in results.items():
-        start_timestamp = int(datetime.datetime.strptime(date, "%Y-%m-%d").timestamp())
-        for screen_result in screen_results:
-            ticker = screen_result["Ticker"]
-            candles = PRICE_DATA[ticker]["candles"]
-            candles_dict = {str(candle["datetime"]): candle for candle in candles}
-            buy_timestamp, sell_timestamp, profit = check_stop_loss(start_timestamp, candles_dict)
-            held_days = (datetime.datetime.fromtimestamp(sell_timestamp)
-                         - datetime.datetime.fromtimestamp(buy_timestamp)).days
-            print(f"Held {ticker} for {held_days} days with profit {profit}")
-    return results
+            # Rewrite the CSV file with new columns
+            header = list(rows[0].keys()) if rows else []
+            if "Sell Date" not in header:
+                header.append("Sell Date")
+            if "Profit" not in header:
+                header.append("Profit")        
+            with open(file_path, mode="w", newline="") as csv_out:
+                writer = csv.DictWriter(csv_out, fieldnames=header)
+                writer.writeheader()
+                writer.writerows(rows)
 
 
 def main():
@@ -109,3 +119,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
