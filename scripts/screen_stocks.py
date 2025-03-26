@@ -128,7 +128,7 @@ def screen(filtered_price_date, end_date):
         volume_change100 = (volume - avg_volume100) * 100 / avg_volume100 if avg_volume100 else 0
 
         if latest_close_price > sma20 and latest_close_price > sma200 and latest_close_price == recent_max_close:
-            if 9 > change > 2.5 and volume_change100 > 175 and volume == recent_max_volume:
+            if 10 > change > 3 and volume_change100 > 200 and volume == recent_max_volume:
                 market_cap_billion = get_market_cap(ticker) / 1e9
                 if 10 < market_cap_billion < 200:
                     results.append(
@@ -150,7 +150,7 @@ def screen(filtered_price_date, end_date):
                                "Sell Date", "Holding Duration", "Profit"])
     df = df.sort_values((["Ticker"]), ascending=True)
 
-    output_path = os.path.join(os.path.dirname(DIR), 'output', 'sell15-sl7-a42-3030-9a2d5-v150.csv')
+    output_path = os.path.join(os.path.dirname(DIR), 'output', 'screen_results.csv')
     if not os.path.exists(output_path):
         df.to_csv(output_path, index=False)
     else:
