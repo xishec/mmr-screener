@@ -1,4 +1,5 @@
 import gzip
+import itertools
 import json
 import os
 import string
@@ -79,7 +80,7 @@ def rankings(PRICE_DATA, end_date):
         print(f"\rCalculating ranking for {ticker:>5}, {i + 1:>5} / {total:>5}, {(i + 1) / total * 100:>6.2f}% ",
               end="", flush=True)
         try:
-            closes = pd.Series([candle["close"] for candle in data["candles"]])
+            closes = pd.Series([candle["close"] for candle in data["candles"]], dtype=float)
             if len(closes) >= 6 * 20:
                 rs = relative_strength(closes, closes_ref)
                 month = 20
@@ -93,7 +94,6 @@ def rankings(PRICE_DATA, end_date):
                     stock_rs[ticker] = rs
         except KeyError:
             print(f'Ticker {ticker} has corrupted data.')
-    print()
 
     df = pd.DataFrame(relative_strengths,
                       columns=[TITLE_TICKER, TITLE_RS, TITLE_PERCENTILE, TITLE_1M, TITLE_3M, TITLE_6M])
@@ -148,8 +148,8 @@ def filter_price_data_by_index(price_data: dict, timestamp: int) -> dict:
     filtered_data = {}
     for ticker, data in price_data.items():
         candles = data.get("candles", [])
-        # Filter candles with index greater than idx
-        filtered_candles = [candle for i, candle in enumerate(candles) if i < idx]
+        # Filter candles with datetime less than or equal to timestamp
+        filtered_candles = [candle for candle in candles if candle["datetime"] <= timestamp]
         # Copy the original data and update the candles list
         new_data = data.copy()
         new_data["candles"] = filtered_candles
@@ -206,10 +206,9 @@ def main(PRICE_DATA=None, date_override=None):
                 .strftime('%Y-%m-%d'))
     print(f"Considering data from {start_date} to {end_date}")
 
-    rankings(filtered_price_date, end_date)
+    # rankings(filtered_price_date, end_date)
     screen_stocks.main(filtered_price_date, end_date)
 
 
 if __name__ == "__main__":
     main()
-

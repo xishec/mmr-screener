@@ -120,12 +120,8 @@ def screen(filtered_price_date, end_date):
 
 
 def main(filtered_price_date=None, end_date=None):
-    if filtered_price_date is None:
-        filtered_price_date = rs_ranking.load_data()
-
-    today = datetime.date.today().strftime("%Y-%m-%d")
-    date = today if end_date is None else end_date
-    screen(filtered_price_date, date)
+    if filtered_price_date is not None and end_date is not None:
+        screen(filtered_price_date, end_date)
 
 
 if __name__ == "__main__":
