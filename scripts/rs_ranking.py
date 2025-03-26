@@ -1,22 +1,23 @@
 import gzip
 import json
-import string
-
-import pandas as pd
 import os
+import string
+import sys
+from typing import Any
+
 import yaml
 from rs_data import cfg
-import datetime
 import screen_stocks
+import pandas as pd
+import datetime
 
 DIR = os.path.dirname(os.path.realpath(__file__))
-
 pd.set_option('display.max_rows', None)
 pd.set_option('display.width', None)
 pd.set_option('display.max_columns', None)
 
 try:
-    with open('config.yaml', 'r') as stream:
+    with open('../config.yaml', 'r') as stream:
         config = yaml.safe_load(stream)
 except FileNotFoundError:
     config = None
@@ -37,8 +38,8 @@ TITLE_3M = "3 Months Ago"
 TITLE_6M = "6 Months Ago"
 TITLE_RS = "Relative Strength"
 
-if not os.path.exists('output'):
-    os.makedirs('output')
+if not os.path.exists('../output'):
+    os.makedirs('../output')
 
 
 def relative_strength(closes: pd.Series, closes_ref: pd.Series):
@@ -69,43 +70,14 @@ def quarters_perf(closes: pd.Series, n):
     return perf_cum.tail(1).item()
 
 
-# Added with ChatGPT------
-def generate_tradingview_csv(percentile_values, first_rs_values):
-    lines = []  # Store the lines in a list
-
-    # Get yesterday's date
-    trading_days = 0
-    yesterday = datetime.date.today() - datetime.timedelta(days=1)
-
-    # Iterate through the desired percentiles in descending order
-    for percentile in sorted(percentile_values):
-        rs_value = first_rs_values[percentile]
-
-        # Iterate five times for each percentile
-        for _ in range(5):
-            trading_date = yesterday - datetime.timedelta(days=trading_days)
-            date_str = trading_date.strftime("%Y%m%dT")
-
-            # Construct the CSV row
-            csv_row = f"{date_str},0,1000,0,{rs_value},0\n"
-            lines.append(csv_row)  # Add the line to the list
-
-            # Increment the trading_days count
-            trading_days += 1
-
-    # Reverse the order of the lines and concatenate them
-    reversed_lines = reversed(lines)
-    csv_content = ''.join(reversed_lines)
-
-    return csv_content
-
-
-def rankings(PRICE_DATA):
-    """Returns a dataframe with percentile rankings for relative strength"""
+def rankings(PRICE_DATA, end_date):
     relative_strengths = []
     ranks = []
     stock_rs = {}
-    for ticker, data in PRICE_DATA.items():
+    total = len(PRICE_DATA)
+    for i, (ticker, data) in enumerate(PRICE_DATA.items()):
+        print(f"\rCalculating ranking for {ticker:>5}, {i + 1:>5} / {total:>5}, {(i + 1) / total * 100:>6.2f}% ",
+              end="", flush=True)
         try:
             closes = list(map(lambda candle: candle["close"], data["candles"]))
             closes_ref = list(map(lambda candle: candle["close"], PRICE_DATA[REFERENCE_TICKER]["candles"]))
@@ -127,11 +99,10 @@ def rankings(PRICE_DATA):
                         (0, ticker, rs, tmp_percentile, rs1m,
                          rs3m, rs6m))
                     stock_rs[ticker] = rs
-
         except KeyError:
             print(f'Ticker {ticker} has corrupted data.')
+    print()
     dfs = []
-    suffix = ''
 
     # stocks
     df = pd.DataFrame(relative_strengths,
@@ -172,33 +143,77 @@ def rankings(PRICE_DATA):
         # Store the rs_value in the dictionary with the percentile as the key
         first_rs_values[percentile] = rs_value
 
-    # Generate the TradingView CSV content
-    tradingview_csv_content = generate_tradingview_csv(percentile_values, first_rs_values)
-
-    # Save the TradingView CSV content to a file
-    with open(os.path.join(DIR, "output", "RSRATING.csv"), "w") as csv_file:
-        csv_file.write(tradingview_csv_content)
-
-    df.to_csv(os.path.join(DIR, "output", f'rs_stocks{suffix}.csv'), index=False)
+    df.to_csv(os.path.join(DIR, f'../output/rs_stocks_{end_date}.csv'), index=False)
     dfs.append(df)
 
     return dfs
 
 
-def main():
+def find_closest_date(PRICE_DATA, target_date_str):
+    target_ts = int(datetime.datetime.strptime(target_date_str, "%Y-%m-%d").timestamp())
+
+    for data in PRICE_DATA.values():
+        candles = data.get("candles", [])
+        if candles:
+            idx, closest_candle = min(enumerate(candles), key=lambda x: abs(x[1]["datetime"] - target_ts))
+            return idx, closest_candle["datetime"]
+
+    return None, None
+
+
+def filter_price_data_by_index(price_data: dict, idx: int) -> dict:
+    filtered_data = {}
+    for ticker, data in price_data.items():
+        candles = data.get("candles", [])
+        # Filter candles with index greater than idx
+        filtered_candles = [candle for i, candle in enumerate(candles) if i < idx]
+        # Copy the original data and update the candles list
+        new_data = data.copy()
+        new_data["candles"] = filtered_candles
+        filtered_data[ticker] = new_data
+    return filtered_data
+
+
+def load_data():
     PRICE_DATA = {}
-    for char in string.ascii_lowercase:
-        file_path = f'data_persist/{char}_price_history.json.gz'
+
+    for i, char in enumerate(string.ascii_lowercase):
+        print(f"\rLoading data strating with {char.upper()} ", end="", flush=True)
+        file_path = f'../data_persist/{char}_price_history.json.gz'
         try:
             with gzip.open(file_path, 'rb') as f_in:
                 data = json.loads(f_in.read().decode('utf-8'))
                 PRICE_DATA.update(data)
         except:
             print(f"File not found: {char}")
+    print()
+    return PRICE_DATA
 
-    ranks = rankings(PRICE_DATA)
-    print(ranks[0])
-    screen_stocks.main()
+
+def ma1in(PRICE_DATA=None, date_override=None):
+    if PRICE_DATA is None:
+        PRICE_DATA = load_data()
+
+    date = datetime.date.today().strftime("%Y-%m-%d")
+    if date_override is not None:
+        date = date_override
+    if len(sys.argv) > 1:
+        date = sys.argv[1]
+
+    idx, timestamp = find_closest_date(PRICE_DATA, date)
+    filtered_price_date = filter_price_data_by_index(PRICE_DATA, idx)
+    start_date = (datetime.datetime.fromtimestamp(filtered_price_date["A"]["candles"][0]["datetime"])
+                  .strftime("%Y-%m-%d"))
+    end_date = (datetime.datetime.fromtimestamp(filtered_price_date["A"]["candles"][-1]["datetime"])
+                .strftime('%Y-%m-%d'))
+    print(f"Considering stocks from {start_date} to {end_date}")
+
+    rankings(filtered_price_date, end_date)
+    screen_stocks.main(filtered_price_date, end_date)
+
+
+def main():
+    PRICE_DATA = load_data()
 
 
 if __name__ == "__main__":

@@ -25,7 +25,7 @@ except yaml.YAMLError as exc:
     print(exc)
 
 try:
-    with open('config.yaml', 'r') as stream:
+    with open('../config.yaml', 'r') as stream:
         config = yaml.safe_load(stream)
 except FileNotFoundError:
     config = None
@@ -79,7 +79,7 @@ def write_to_file(dict, file):
 
 
 def write_price_history_file(char, tickers_dict):
-    with gzip.open(f'data_persist/{char.lower()}_price_history.json.gz', 'wb') as f_out:
+    with gzip.open(f'../data_persist/{char.lower()}_price_history.json.gz', 'wb') as f_out:
         json_str = json.dumps(tickers_dict)
         f_out.write(json_str.encode('utf-8'))
 
