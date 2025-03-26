@@ -177,12 +177,13 @@ def load_data():
     PRICE_DATA = {}
     chars = list(string.ascii_lowercase)
 
+    print("Loading price data in parallel...")
     with concurrent.futures.ThreadPoolExecutor(max_workers=min(26, len(chars))) as executor:
         future_to_char = {executor.submit(load_file, char): char for char in chars}
 
         for i, future in enumerate(concurrent.futures.as_completed(future_to_char)):
             char = future_to_char[future]
-            print(f"\rParallel loading: {(i + 1):2}/{len(chars):2} files processed ({char.upper()})", end="", flush=True)
+            print(f"\rLoading: {i + 1}/{len(chars)} files processed ({char.upper()})", end="", flush=True)
             data = future.result()
             if data:
                 PRICE_DATA.update(data)
@@ -196,7 +197,7 @@ def main(PRICE_DATA=None, date_override=None):
         PRICE_DATA = load_data()
 
     # date = datetime.date.today().strftime("%Y-%m-%d")
-    date = "2025-03-23"
+    date = "2023-11-20"
     if date_override is not None:
         date = date_override
     if len(sys.argv) > 1:
