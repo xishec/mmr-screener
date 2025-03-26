@@ -71,6 +71,13 @@ def quarters_perf(closes: pd.Series, n):
 
 
 def rankings(PRICE_DATA, end_date):
+    output_dir = os.path.join(os.path.dirname(DIR), 'output')
+    output_path = os.path.join(output_dir, f'rs_stocks_{end_date}.csv')
+    if os.path.exists(output_path):
+        print(f"rs_stocks file {output_path} already exists. Loading...")
+        df = pd.read_csv(output_path)
+        return [df]
+
     relative_strengths = []
     stock_rs = {}
     total = len(PRICE_DATA)
@@ -123,9 +130,7 @@ def rankings(PRICE_DATA, end_date):
         rs_value = first_row[TITLE_RS]
         first_rs_values[percentile] = rs_value
 
-    output_dir = os.path.join(os.path.dirname(DIR), 'output')
     os.makedirs(output_dir, exist_ok=True)
-    output_path = os.path.join(output_dir, f'rs_stocks_{end_date}.csv')
     df.to_csv(output_path, index=False)
 
     return [df]
@@ -212,3 +217,4 @@ def main(PRICE_DATA=None, date_override=None):
 
 if __name__ == "__main__":
     main()
+
