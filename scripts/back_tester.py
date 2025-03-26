@@ -17,9 +17,8 @@ def calculate_sma(prices, window):
 
 
 def screen_stocks(PRICE_DATA):
-    # Set the starting date as 5 years ago from today
-    current_date = datetime.datetime.strptime("2025-01-01", "%Y-%m-%d") - relativedelta(years=3)
-    today = datetime.datetime.today()  # changed from datetime.date.today()
+    today = datetime.datetime.strptime("2025-01-01", "%Y-%m-%d")
+    current_date = today - relativedelta(years=3)
 
     # Loop over each month from start to today
     while current_date <= today:
@@ -102,7 +101,8 @@ def back_test(PRICE_DATA):
         sell_date = datetime.datetime.fromtimestamp(sell_timestamp).strftime("%Y-%m-%d")
         row["Sell Date"] = sell_date
         row["Profit"] = f"{profit * 100:.4f}%"
-        holding_days = (datetime.datetime.fromtimestamp(sell_timestamp) - datetime.datetime.fromtimestamp(buy_timestamp)).days
+        holding_days = (datetime.datetime.fromtimestamp(sell_timestamp) - datetime.datetime.fromtimestamp(
+            buy_timestamp)).days
         row["Holding Duration"] = holding_days
         total_holding_days += holding_days
         total_profit += profit
@@ -113,10 +113,16 @@ def back_test(PRICE_DATA):
     if count > 0 and not has_average:
         avg_held = total_holding_days / count
         avg_profit = total_profit / count
+        r = sum(global_profits) / len(global_profits)
+        d = sum(global_holding_days) / len(global_holding_days)
+        n = 365 / d
+        f = (1 + r) ** n
+        annualized_return = (f - 1) * 100
+
         summary = {col: "" for col in rows[0].keys()}
         summary["Ticker"] = "AVERAGE"
         summary["Holding Duration"] = f"{avg_held:.2f}"
-        summary["Profit"] = f"{avg_profit * 100:.4f}%"
+        summary["Profit"] = f"{avg_profit * 100:.4f}% ({annualized_return:.4f}%)"
         rows.append(summary)
 
     with open(file_path, mode="w", newline="") as csv_out:
@@ -126,8 +132,14 @@ def back_test(PRICE_DATA):
         writer.writerows(rows)
 
     if len(global_holding_days) > 0 and len(global_profits) > 0:
-        print(f"Global Average Holding Days: {sum(global_holding_days) / len(global_holding_days):.2f}")
-        print(f"Global Average Profit: {sum(global_profits) / len(global_profits) * 100:.4f}%")
+        r = sum(global_profits) / len(global_profits)
+        d = sum(global_holding_days) / len(global_holding_days)
+        n = 365 / d
+        f = (1 + r) ** n
+        annualized_return = (f - 1) * 100
+        print(f"Global Average Profit: {r * 100:.4f}%")
+        print(f"Global Average Holding Days: {d:.2f}")
+        print(f"Annualized Return: {annualized_return:.4f}%")
 
 
 def main():
@@ -138,4 +150,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
