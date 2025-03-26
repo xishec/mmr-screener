@@ -113,22 +113,22 @@ def screen(filtered_price_date, end_date):
         ticker = row[0]
         print(f"Screening stocks {ticker} \r{i + 1} / {total}, {(i + 1) / total * 100:.2f}% ", end="", flush=True)
 
+        recent_max_close = find_max_prices(price_history[ticker], 30)
+        recent_max_volume = find_max_volume(price_history[ticker], 30)
+
         sma20 = calculate_sma(price_history[ticker], 22)
         sma200 = calculate_sma(price_history[ticker], 200)
-        recent_max_close = find_max_prices(price_history[ticker], 30)
-
         latest_close_price = price_history[ticker]["candles"][-1]["close"]
         date = price_history[ticker]["candles"][-1]["datetime"]
         volume = price_history[ticker]["candles"][-1]["volume"]
         avg_volume100 = find_avg_volume(price_history[ticker], 100)
-        recent_max_volume = find_max_volume(price_history[ticker], 30)
         change = get_change_on_date(price_history[ticker], date) * 100
         above_sma20 = (latest_close_price - sma20) * 100 / sma20 if sma20 else 0
         above_sma200 = (latest_close_price - sma200) * 100 / sma200 if sma200 else 0
         volume_change100 = (volume - avg_volume100) * 100 / avg_volume100 if avg_volume100 else 0
 
         if latest_close_price > sma20 and latest_close_price > sma200 and latest_close_price == recent_max_close:
-            if 9 > change > 2 and volume > avg_volume100 * 2 and volume == recent_max_volume:
+            if 9 > change > 2.5 and volume_change100 > 175 and volume == recent_max_volume:
                 market_cap_billion = get_market_cap(ticker) / 1e9
                 if 10 < market_cap_billion < 200:
                     results.append(
@@ -150,7 +150,7 @@ def screen(filtered_price_date, end_date):
                                "Sell Date", "Holding Duration", "Profit"])
     df = df.sort_values((["Ticker"]), ascending=True)
 
-    output_path = os.path.join(os.path.dirname(DIR), 'output', 'screen_results.csv')
+    output_path = os.path.join(os.path.dirname(DIR), 'output', 'sell15-sl7-a42-3030-9a2d5-v150.csv')
     if not os.path.exists(output_path):
         df.to_csv(output_path, index=False)
     else:

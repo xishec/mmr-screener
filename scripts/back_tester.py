@@ -36,9 +36,10 @@ import datetime
 
 
 def check_stop_loss(start_timestamp, candles_dict):
-    MA_PERIOD = 10  # Period for moving average calculation
+    MA_PERIOD = 20  # Period for moving average calculation
     buy_timestamp = -1
     purchase_price = -1
+    max_close = -1
     close_prices = []
 
     sorted_timestamps = sorted(candles_dict.keys(),
@@ -62,7 +63,13 @@ def check_stop_loss(start_timestamp, candles_dict):
         if purchase_price == -1:
             buy_timestamp = ts_int
             purchase_price = current_close
+            max_close = current_close
             continue
+
+        # Update trailing stop loss: update max_close and check if current close dropped 7% below max
+        max_close = max(max_close, current_close)
+        if current_close < max_close * 0.93:
+            return buy_timestamp, ts_int, (current_close - purchase_price) / purchase_price
 
         ma_value = sum(close_prices) / MA_PERIOD
         if current_close < ma_value:
@@ -76,7 +83,7 @@ def check_stop_loss(start_timestamp, candles_dict):
 def back_test(PRICE_DATA):
     DIR = os.path.dirname(os.path.realpath(__file__))
     output_dir = os.path.join(os.path.dirname(DIR), 'output')
-    file_path = os.path.join(output_dir, 'screen_results.csv')
+    file_path = os.path.join(output_dir, 'sell15-sl7-a42-3030-9a2d5-v150.csv')
     global_holding_days = []
     global_profits = []
 
@@ -150,3 +157,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
