@@ -18,7 +18,7 @@ def calculate_sma(prices, window):
 
 def screen_stocks(PRICE_DATA):
     # Set the starting date as 5 years ago from today
-    current_date = datetime.date.today() - relativedelta(years=2)
+    current_date = datetime.date.today() - relativedelta(years=3)
     today = datetime.date.today()
 
     # Loop over each month from start to today
@@ -30,14 +30,14 @@ def screen_stocks(PRICE_DATA):
         rs_ranking.main(PRICE_DATA, date_str)
 
         # Increment the date by one month
-        current_date += relativedelta(months=1)
+        current_date += relativedelta(months=0.2)
 
 
 import datetime
 
 
 def check_stop_loss(start_timestamp, candles_dict):
-    MA_PERIOD = 14  # Period for moving average calculation
+    MA_PERIOD = 10  # Period for moving average calculation
     buy_timestamp = -1
     purchase_price = -1
     close_prices = []
