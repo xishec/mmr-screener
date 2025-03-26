@@ -125,7 +125,6 @@ def rankings(PRICE_DATA, end_date):
 
     output_dir = os.path.join(os.path.dirname(DIR), 'output')
     os.makedirs(output_dir, exist_ok=True)
-
     output_path = os.path.join(output_dir, f'rs_stocks_{end_date}.csv')
     df.to_csv(output_path, index=False)
 
@@ -192,7 +191,8 @@ def main(PRICE_DATA=None, date_override=None):
     if PRICE_DATA is None:
         PRICE_DATA = load_data()
 
-    date = datetime.date.today().strftime("%Y-%m-%d")
+    # date = datetime.date.today().strftime("%Y-%m-%d")
+    date = "2023-11-20"
     if date_override is not None:
         date = date_override
     if len(sys.argv) > 1:
@@ -206,7 +206,7 @@ def main(PRICE_DATA=None, date_override=None):
                 .strftime('%Y-%m-%d'))
     print(f"Considering data from {start_date} to {end_date}")
 
-    # rankings(filtered_price_date, end_date)
+    rankings(filtered_price_date, end_date)
     screen_stocks.main(filtered_price_date, end_date)
 
 
