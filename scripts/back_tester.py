@@ -17,8 +17,8 @@ def calculate_sma(prices, window):
 
 
 def screen_stocks(PRICE_DATA):
-    today = datetime.datetime.strptime("2025-01-01", "%Y-%m-%d")
-    current_date = today - relativedelta(years=3)
+    today = datetime.datetime.strptime("2024-01-01", "%Y-%m-%d")
+    current_date = today - relativedelta(years=1)
 
     # Loop over each month from start to today
     while current_date <= today:
@@ -29,7 +29,7 @@ def screen_stocks(PRICE_DATA):
         rs_ranking.main(PRICE_DATA, date_str)
 
         # Increment the date by one month
-        current_date += relativedelta(days=10)
+        current_date += relativedelta(days=1)
 
 
 import datetime
@@ -80,6 +80,55 @@ def check_stop_loss(start_timestamp, candles_dict):
     return buy_timestamp, int(last_ts), (candles_dict[last_ts]["close"] - purchase_price) / purchase_price
 
 
+def simulate():
+    DIR = os.path.dirname(os.path.realpath(__file__))
+    output_dir = os.path.join(os.path.dirname(DIR), 'output')
+    file_path = os.path.join(output_dir, 'screen_results.csv')
+    dates = {}
+    with open(file_path, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            date_key = row.get("Date")
+            if date_key:
+                if date_key in dates:
+                    dates[date_key].append(row)
+                else:
+                    dates[date_key] = [row]
+    initial_budget = 100
+    budget = initial_budget
+    holdings = {}
+    zero_budget_counter = 0
+    trading_counter = 0
+    for current_date, rows in dates.items():
+        for sell_date in list(holdings.keys()):
+            if current_date > sell_date:
+                for profit in holdings[sell_date]:
+                    budget += profit
+                holdings.pop(sell_date)
+
+        budget_share = budget * 0.5 / len(rows)
+        if budget_share == 0:
+            zero_budget_counter += 1
+            continue
+
+        trading_counter += 1
+        for row in rows:
+            budget -= budget_share
+            percentage = float(row["Profit"].replace("%", ""))
+            future_profit = budget_share * (1 + percentage / 100)
+            sell_date = row.get("Sell Date")
+            if sell_date not in holdings:
+                holdings[sell_date] = []
+            holdings[sell_date].append(future_profit)
+
+    for profits in holdings.values():
+        for profit in profits:
+            budget += profit
+
+    percentage = (budget - initial_budget) / initial_budget * 100
+    print(f"{percentage:.2f}%, {zero_budget_counter} zero budget days / {trading_counter} trading days")
+
+
 def back_test(PRICE_DATA):
     DIR = os.path.dirname(os.path.realpath(__file__))
     output_dir = os.path.join(os.path.dirname(DIR), 'output')
@@ -101,6 +150,8 @@ def back_test(PRICE_DATA):
             continue
 
         screening_date = row["Date"]
+        if screening_date == "":
+            continue
         start_timestamp = int(datetime.datetime.strptime(screening_date, "%Y-%m-%d").timestamp())
         candles = PRICE_DATA[row["Ticker"]]["candles"]
         candles_dict = {str(candle["datetime"]): candle for candle in candles}
@@ -150,11 +201,11 @@ def back_test(PRICE_DATA):
 
 
 def main():
-    PRICE_DATA = rs_ranking.load_data()
-    screen_stocks(PRICE_DATA)
-    back_test(PRICE_DATA)
+    # PRICE_DATA = rs_ranking.load_data()
+    # screen_stocks(PRICE_DATA)x
+    # back_test(PRICE_DATA)
+    simulate()
 
 
 if __name__ == "__main__":
     main()
-

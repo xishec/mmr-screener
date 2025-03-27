@@ -72,11 +72,15 @@ def quarters_perf(closes: pd.Series, n):
 
 def rankings(PRICE_DATA, end_date):
     output_dir = os.path.join(os.path.dirname(DIR), 'output')
-    output_path = os.path.join(output_dir, f'rs_stocks_{end_date}.csv')
-    if os.path.exists(output_path):
-        print(f"rs_stocks file {output_path} already exists. Loading...")
-        df = pd.read_csv(output_path)
-        return [df]
+    original_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+    for i in range(0, 11):
+        try_date = original_date - datetime.timedelta(days=i)
+        try_date_str = try_date.strftime("%Y-%m-%d")
+        output_path = os.path.join(output_dir, f'rs_stocks_{try_date_str}.csv')
+        if os.path.exists(output_path):
+            print(f"rs_stocks file {output_path} already exists. Loading...")
+            df = pd.read_csv(output_path)
+            return [df]
 
     relative_strengths = []
     stock_rs = {}

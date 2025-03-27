@@ -37,15 +37,20 @@ def save_market_cap_cache():
 market_cap_cache = load_market_cap_cache()
 
 
-# Load the first half of rs_stocks.csv
 def load_csv(end_date):
-    path = os.path.join(os.path.dirname(DIR), 'output', f'rs_stocks_{end_date}.csv')
-    with open(path, mode='r') as csv_file:
-        csv_reader = csv.reader(csv_file)
-        rows = list(csv_reader)
-        first_half_rows = rows[1:len(rows) // 2 + 1]
-    return first_half_rows
-
+    output_dir = os.path.join(os.path.dirname(DIR), 'output')
+    original_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+    for i in range(0, 11):
+        try_date = original_date - datetime.timedelta(days=i)
+        try_date_str = try_date.strftime("%Y-%m-%d")
+        path = os.path.join(os.path.dirname(DIR), 'output', f'rs_stocks_{try_date_str}.csv')
+        if os.path.exists(path):
+            with open(path, mode='r') as csv_file:
+                csv_reader = csv.reader(csv_file)
+                rows = list(csv_reader)
+                first_half_rows = rows[1:len(rows) // 2 + 1]
+            return first_half_rows
+    return None
 
 def calculate_sma(prices, window):
     close_prices = [candle['close'] for candle in prices['candles']]
