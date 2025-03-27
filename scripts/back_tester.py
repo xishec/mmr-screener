@@ -81,6 +81,8 @@ def check_stop_loss(start_timestamp, candles_dict):
 
 
 def simulate():
+    timeline = []  # new: timeline list to record simulation state per date
+
     DIR = os.path.dirname(os.path.realpath(__file__))
     output_dir = os.path.join(os.path.dirname(DIR), 'output')
     file_path = os.path.join(output_dir, 'screen_results.csv')
@@ -92,8 +94,8 @@ def simulate():
             if date_key:
                 dates.setdefault(date_key, []).append(row)
 
-    initial_budget = 100
-    budget = initial_budget
+    initial_cash = 100
+    current_cash = initial_cash
     holdings = {}
     zero_budget_counter = 0
     trading_counter = 0
@@ -102,28 +104,55 @@ def simulate():
         # Release holdings if sell date has passed
         for sell_date in list(holdings.keys()):
             if current_date > sell_date:
-                budget += sum(holdings.pop(sell_date))
+                tickers_dict_to_sell = holdings.pop(sell_date)
+                for ticker, profit in tickers_dict_to_sell.items():
+                    current_cash += profit
+                    timeline.append({
+                        "Date": current_date,
+                        "Action": "Sell",
+                        "Ticker": ticker,
+                        "Current Cash": current_cash,
+                        "Holding Value": sum(sum(profits) for profits in holdings.values()),
+                        "Portfolio Value": current_cash + sum(sum(profits) for profits in holdings.values())
+                    })
 
-        # Calculate budget share and skip if zero
-        budget_share = budget * 1 / len(rows)
-        if budget_share == 0:
+        cash_per_share = current_cash * 1 / len(rows)
+        if cash_per_share == 0:
             zero_budget_counter += 1
             continue
 
         trading_counter += 1
         for row in rows:
-            budget -= budget_share
+            current_cash -= cash_per_share
             percentage = float(row["Profit"].replace("%", ""))
-            future_profit = budget_share * (1 + percentage / 100)
+            future_profit = cash_per_share * (1 + percentage / 100)
             sell_date = row.get("Sell Date")
-            holdings.setdefault(sell_date, []).append(future_profit)
+            ticker = row.get("Ticker")
+            holdings.setdefault(sell_date, {})[ticker] = future_profit
+            timeline.append({
+                "Date": current_date,
+                "Action": "Buy",
+                "Ticker": ticker,
+                "Current Cash": current_cash,
+                "Holding Value": sum(sum(profits) for profits in holdings.values()),
+                "Portfolio Value": current_cash + sum(sum(profits) for profits in holdings.values())
+            })
 
     # Add remaining holdings to budget
     for profits in holdings.values():
-        budget += sum(profits)
+        current_cash += sum(profits)
 
-    percentage = (budget - initial_budget) / initial_budget * 100
+    percentage = (current_cash - initial_cash) / initial_cash * 100
     print(f"{percentage:.2f}%, {zero_budget_counter} zero budget days / {trading_counter} trading days")
+
+    # New: write simulation timeline to CSV file with header and rows
+    timeline_file = os.path.join(output_dir, 'screen_results_timeline.csv')
+    with open(timeline_file, mode='w', newline='') as csvfile:
+        fieldnames = ["Date", "Budget", "Holding Value", "Portfolio Value"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in timeline:
+            writer.writerow(row)
 
 
 def back_test(PRICE_DATA):
