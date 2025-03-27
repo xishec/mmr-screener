@@ -90,23 +90,22 @@ def simulate():
         for row in reader:
             date_key = row.get("Date")
             if date_key:
-                if date_key in dates:
-                    dates[date_key].append(row)
-                else:
-                    dates[date_key] = [row]
+                dates.setdefault(date_key, []).append(row)
+
     initial_budget = 100
     budget = initial_budget
     holdings = {}
     zero_budget_counter = 0
     trading_counter = 0
+
     for current_date, rows in dates.items():
+        # Release holdings if sell date has passed
         for sell_date in list(holdings.keys()):
             if current_date > sell_date:
-                for profit in holdings[sell_date]:
-                    budget += profit
-                holdings.pop(sell_date)
+                budget += sum(holdings.pop(sell_date))
 
-        budget_share = budget * 0.5 / len(rows)
+        # Calculate budget share and skip if zero
+        budget_share = budget * 1 / len(rows)
         if budget_share == 0:
             zero_budget_counter += 1
             continue
@@ -117,13 +116,11 @@ def simulate():
             percentage = float(row["Profit"].replace("%", ""))
             future_profit = budget_share * (1 + percentage / 100)
             sell_date = row.get("Sell Date")
-            if sell_date not in holdings:
-                holdings[sell_date] = []
-            holdings[sell_date].append(future_profit)
+            holdings.setdefault(sell_date, []).append(future_profit)
 
+    # Add remaining holdings to budget
     for profits in holdings.values():
-        for profit in profits:
-            budget += profit
+        budget += sum(profits)
 
     percentage = (budget - initial_budget) / initial_budget * 100
     print(f"{percentage:.2f}%, {zero_budget_counter} zero budget days / {trading_counter} trading days")
