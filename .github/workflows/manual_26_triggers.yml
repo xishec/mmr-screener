@@ -16,7 +16,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const alphabet = 'yz';
+            const alphabet = 'abcdefghijklmnopqrstuvwxyz';
             const promises = alphabet.split('').map(async (char) => {
               await github.rest.actions.createWorkflowDispatch({
                 owner: context.repo.owner,
