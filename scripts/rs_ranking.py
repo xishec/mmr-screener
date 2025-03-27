@@ -218,6 +218,8 @@ def main(PRICE_DATA=None, date_override=None):
     rankings(filtered_price_date, end_date)
     screen_stocks.main(filtered_price_date, end_date)
 
+    return end_date
+
 
 if __name__ == "__main__":
     main()

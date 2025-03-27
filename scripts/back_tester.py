@@ -7,6 +7,7 @@ import os
 import csv
 
 from scripts import rs_ranking
+from scripts.rs_ranking import find_closest_date
 
 
 def calculate_sma(prices, window):
@@ -20,15 +21,14 @@ def screen_stocks(PRICE_DATA):
     today = datetime.datetime.strptime("2024-01-01", "%Y-%m-%d")
     current_date = today - relativedelta(years=1)
 
-    # Loop over each month from start to today
+    last_ts = None
     while current_date <= today:
-        # Format the date as "YYYY-MM-DD"
         date_str = current_date.strftime("%Y-%m-%d")
+        timestamp = find_closest_date(PRICE_DATA, date_str)
+        if timestamp != last_ts:
+            rs_ranking.main(PRICE_DATA, date_str)
+            last_ts = timestamp
 
-        # Call the function with the date override argument
-        rs_ranking.main(PRICE_DATA, date_str)
-
-        # Increment the date by one month
         current_date += relativedelta(days=1)
 
 
@@ -107,35 +107,46 @@ def simulate():
                 tickers_dict_to_sell = holdings.pop(sell_date)
                 for ticker, profit in tickers_dict_to_sell.items():
                     current_cash += profit
+                    holding_value = sum(sum(profits.values()) for profits in holdings.values())
                     timeline.append({
                         "Date": current_date,
                         "Action": "Sell",
                         "Ticker": ticker,
-                        "Current Cash": current_cash,
-                        "Holding Value": sum(sum(profits.values()) for profits in holdings.values()),
-                        "Portfolio Value": current_cash + sum(sum(profits.values()) for profits in holdings.values())
+                        "Current Cash": f"{current_cash:.2f}",
+                        "Holding Value": f"{holding_value:.2f}",
+                        "Portfolio Value": f"{current_cash + holding_value:.2f}"
                     })
 
         cash_per_share = current_cash * 1 / len(rows)
-        if cash_per_share == 0:
-            zero_budget_counter += 1
-            continue
-
         trading_counter += 1
         for row in rows:
+            ticker = row.get("Ticker")
+            if cash_per_share == 0:
+                zero_budget_counter += 1
+                holding_value = sum(sum(profits.values()) for profits in holdings.values())
+                timeline.append({
+                    "Date": current_date,
+                    "Action": "No Cash",
+                    "Ticker": ticker,
+                    "Current Cash": f"{current_cash:.2f}",
+                    "Holding Value": f"{holding_value:.2f}",
+                    "Portfolio Value": f"{current_cash + holding_value:.2f}"
+                })
+                continue
+
             current_cash -= cash_per_share
             percentage = float(row["Profit"].replace("%", ""))
             future_profit = cash_per_share * (1 + percentage / 100)
             sell_date = row.get("Sell Date")
-            ticker = row.get("Ticker")
             holdings.setdefault(sell_date, {})[ticker] = future_profit
+            holding_value = sum(sum(profits.values()) for profits in holdings.values())
             timeline.append({
                 "Date": current_date,
                 "Action": "Buy",
                 "Ticker": ticker,
-                "Current Cash": current_cash,
-                "Holding Value": sum(sum(profits.values()) for profits in holdings.values()),
-                "Portfolio Value": current_cash + sum(sum(profits.values()) for profits in holdings.values())
+                "Current Cash": f"{current_cash:.2f}",
+                "Holding Value": f"{holding_value:.2f}",
+                "Portfolio Value": f"{current_cash + holding_value:.2f}"
             })
 
     # Add remaining holdings to budget
@@ -187,7 +198,7 @@ def back_test(PRICE_DATA):
         row["Profit"] = f"{profit * 100:.4f}%"
         holding_days = (datetime.datetime.fromtimestamp(sell_timestamp) - datetime.datetime.fromtimestamp(
             buy_timestamp)).days
-        row["Holding Duration"] = holding_days
+        row["Holding Duration"] = str(holding_days)
         total_holding_days += holding_days
         total_profit += profit
         count += 1
@@ -228,11 +239,10 @@ def back_test(PRICE_DATA):
 
 def main():
     # PRICE_DATA = rs_ranking.load_data()
-    # screen_stocks(PRICE_DATA)x
+    # screen_stocks(PRICE_DATA)
     # back_test(PRICE_DATA)
     simulate()
 
 
 if __name__ == "__main__":
     main()
-
