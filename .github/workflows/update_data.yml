@@ -25,7 +25,7 @@ jobs:
       - name: execute py script # aggregate current data
         run: |
           python -m pip install -r requirements.txt
-          python ./script/rs_data.py ${{ github.event.inputs.char }}
+          python ../script/rs_data.py ${{ github.event.inputs.char }}
 
       - name: Commit and push if changes
         run: |
