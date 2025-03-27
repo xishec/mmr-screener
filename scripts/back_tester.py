@@ -112,8 +112,8 @@ def simulate():
                         "Action": "Sell",
                         "Ticker": ticker,
                         "Current Cash": current_cash,
-                        "Holding Value": sum(sum(profits) for profits in holdings.values()),
-                        "Portfolio Value": current_cash + sum(sum(profits) for profits in holdings.values())
+                        "Holding Value": sum(sum(profits.values()) for profits in holdings.values()),
+                        "Portfolio Value": current_cash + sum(sum(profits.values()) for profits in holdings.values())
                     })
 
         cash_per_share = current_cash * 1 / len(rows)
@@ -134,13 +134,13 @@ def simulate():
                 "Action": "Buy",
                 "Ticker": ticker,
                 "Current Cash": current_cash,
-                "Holding Value": sum(sum(profits) for profits in holdings.values()),
-                "Portfolio Value": current_cash + sum(sum(profits) for profits in holdings.values())
+                "Holding Value": sum(sum(profits.values()) for profits in holdings.values()),
+                "Portfolio Value": current_cash + sum(sum(profits.values()) for profits in holdings.values())
             })
 
     # Add remaining holdings to budget
     for profits in holdings.values():
-        current_cash += sum(profits)
+        current_cash += sum(profits.values())
 
     percentage = (current_cash - initial_cash) / initial_cash * 100
     print(f"{percentage:.2f}%, {zero_budget_counter} zero budget days / {trading_counter} trading days")
@@ -148,7 +148,7 @@ def simulate():
     # New: write simulation timeline to CSV file with header and rows
     timeline_file = os.path.join(output_dir, 'screen_results_timeline.csv')
     with open(timeline_file, mode='w', newline='') as csvfile:
-        fieldnames = ["Date", "Budget", "Holding Value", "Portfolio Value"]
+        fieldnames = ["Date", "Action", "Ticker", "Current Cash", "Holding Value", "Portfolio Value"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for row in timeline:
@@ -235,3 +235,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
