@@ -18,7 +18,7 @@ def calculate_sma(prices, window):
 
 
 def screen_stocks(PRICE_DATA):
-    today = datetime.datetime.strptime("2024-01-01", "%Y-%m-%d")
+    today = datetime.datetime.strptime("2023-01-01", "%Y-%m-%d")
     current_date = today - relativedelta(years=1)
 
     last_ts = None
@@ -69,6 +69,7 @@ def check_stop_loss(start_timestamp, candles_dict):
         # Update trailing stop loss: update max_close and check if current close dropped 7% below max
         max_close = max(max_close, current_close)
         if current_close < max_close * 0.93:
+            print(f"----------*************************************Stop loss triggered")
             return buy_timestamp, ts_int, (current_close - purchase_price) / purchase_price
 
         ma_value = sum(close_prices) / MA_PERIOD
@@ -238,9 +239,9 @@ def back_test(PRICE_DATA):
 
 
 def main():
-    # PRICE_DATA = rs_ranking.load_data()
-    # screen_stocks(PRICE_DATA)
-    # back_test(PRICE_DATA)
+    PRICE_DATA = rs_ranking.load_data()
+    screen_stocks(PRICE_DATA)
+    back_test(PRICE_DATA)
     simulate()
 
 
