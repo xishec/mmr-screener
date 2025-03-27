@@ -51,12 +51,6 @@ jobs:
               } while (incompleteRuns.length > 0);
       
               console.log('done');
-              await github.rest.actions.createWorkflowDispatch({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                workflow_id: 'update_relative_strength.yml',
-                ref: 'main'
-              });
             }
       
             await checkWorkflowsCompletion();

@@ -1,10 +1,14 @@
 import os
 import datetime
+import sys
+
 import yfinance as yf
 import csv
 import time
 import pandas as pd
 import json
+
+from scripts import rs_ranking
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 OUTPUT_DIR = os.path.join(os.path.dirname(DIR), 'output')
