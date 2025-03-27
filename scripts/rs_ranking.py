@@ -200,8 +200,8 @@ def main(PRICE_DATA=None, date_override=None):
     if PRICE_DATA is None:
         PRICE_DATA = load_data()
 
-    # date = datetime.date.today().strftime("%Y-%m-%d")
-    date = "2023-11-20"
+    date = datetime.date.today().strftime("%Y-%m-%d")
+    # date = "2023-11-20"
     if date_override is not None:
         date = date_override
     if len(sys.argv) > 1:

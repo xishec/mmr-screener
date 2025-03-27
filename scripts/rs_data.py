@@ -143,7 +143,8 @@ def get_yf_data(ticker, start_date, end_date):
             end=end_date,
             auto_adjust=False,
             progress=False,
-            session=session
+            session=session,
+            rounding=True
         )
 
         # Add a small delay to avoid rate limiting (adjust as needed)
@@ -168,10 +169,11 @@ def get_yf_data(ticker, start_date, end_date):
             return None
 
         timestamps = list(yahoo_response["Open"].keys())
-        timestamps = list(map(lambda timestamp: int(timestamp.timestamp()), timestamps))
+        timestamps = timestamps = [datetime.strptime(dt.strftime('%Y-%m-%d'), "%Y-%m-%d").timestamp()
+                                   for dt in timestamps]
 
         opens = list(yahoo_response["Open"].values())
-        closes = list(yahoo_response["Close"].values())
+        closes = list(yahoo_response["Adj Close"].values())
         lows = list(yahoo_response["Low"].values())
         highs = list(yahoo_response["High"].values())
         volumes = list(yahoo_response["Volume"].values())
@@ -276,7 +278,7 @@ def load_prices_from_yahoo(char):
 
 
 def main():
-    char = "a" if len(sys.argv) <= 1 else sys.argv[1]
+    char = "x" if len(sys.argv) <= 1 else sys.argv[1]
     load_prices_from_yahoo(char)
 
 
