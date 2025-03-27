@@ -13,6 +13,7 @@ import numpy as np
 from io import StringIO
 from datetime import date
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -169,8 +170,8 @@ def get_yf_data(ticker, start_date, end_date):
             return None
 
         timestamps = list(yahoo_response["Open"].keys())
-        timestamps = timestamps = [datetime.strptime(dt.strftime('%Y-%m-%d'), "%Y-%m-%d").timestamp()
-                                   for dt in timestamps]
+        timestamps = timestamps = [(timestamp + relativedelta(hours=16)).timestamp()
+                                   for timestamp in timestamps]
 
         opens = list(yahoo_response["Open"].values())
         closes = list(yahoo_response["Adj Close"].values())
