@@ -18,7 +18,7 @@ def calculate_sma(prices, window):
 
 
 def screen_stocks(PRICE_DATA):
-    today = datetime.datetime.strptime("2023-01-01", "%Y-%m-%d")
+    today = datetime.datetime.strptime("2025-01-01", "%Y-%m-%d")
     current_date = today - relativedelta(years=1)
 
     last_ts = None

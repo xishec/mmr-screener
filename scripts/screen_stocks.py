@@ -144,28 +144,28 @@ def screen(filtered_price_date, end_date):
         trending_up = sma200 / sma200_22 if sma200_22 else 0
 
         score = 0
-        if 1.5 >= close_sma50 >= 1.45:
+        if close_sma50 >= 1:
             score += 1
-        if 1.9 >= close_sma150 >= 1.6:
+        if close_sma150 >= 1:
             score += 1
-        if 1.9 >= close_sma200 >= 1.7:
+        if close_sma200 >= 1:
             score += 1
-        if 1.2 >= sma50_sma150 >= 1.14:
+        if sma50_sma150 >= 1:
             score += 1
-        if 1.26 >= sma50_sma200 >= 1.18:
+        if sma50_sma200 >= 1:
             score += 1
-        if 1.06 >= sma150_sma200 >= 1.02:
+        if sma150_sma200 >= 1:
             score += 1
-        if 1.7 >= trending_up >= 1.03:
+        if trending_up >= 1:
             score += 1
 
         avg_volume100 = find_avg_volume(price_history[ticker], 100)
         volume_volume100 = volume / avg_volume100 if avg_volume100 else 0
-        is_breakout = 3 >= price_change >= 0 and 3 >= volume_volume100 >= 1
+        is_breakout = price_change >= 1.5 and volume_volume100 >= 2
 
-        if score > 5 and is_breakout and last_max_price > 365 and last_max_volume < 3:
+        if score >= 6 and is_breakout:
             market_cap_billion = get_market_cap(ticker) / 1e9
-            if 20 < market_cap_billion < 40:
+            if 10 < market_cap_billion < 100:
                 date_string = datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d')
                 results.append(
                     (ticker, f"{market_cap_billion:>6.2f}B", date_string, f"{latest_close_price:>7.2f}$",
