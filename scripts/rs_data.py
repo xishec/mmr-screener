@@ -81,7 +81,10 @@ def write_to_file(dict, file):
 
 
 def write_price_history_file(char, tickers_dict):
-    with gzip.open(f'../data_persist/{char.lower()}_price_history.json.gz', 'wb') as f_out:
+    directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data_persist')
+    os.makedirs(directory, exist_ok=True)
+    path = os.path.join(directory, f'{char.lower()}_price_history.json.gz')
+    with gzip.open(path, 'wb') as f_out:
         json_str = json.dumps(tickers_dict)
         f_out.write(json_str.encode('utf-8'))
 
