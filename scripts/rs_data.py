@@ -170,7 +170,7 @@ def get_yf_data(ticker, start_date, end_date):
             return None
 
         timestamps = list(yahoo_response["Open"].keys())
-        timestamps = timestamps = [int((timestamp + relativedelta(hours=16)).date.timestamp())
+        timestamps = timestamps = [int((timestamp + relativedelta(hours=16)).timestamp())
                                    for timestamp in timestamps]
 
         opens = list(yahoo_response["Open"].values())
