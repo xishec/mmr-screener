@@ -1,6 +1,5 @@
-Ticker,Market Cap,Date,Close Price,Price change,Volume / Avg,Last max price,Last max volume,Close / SMA50,Close / SMA150,Close / SMA200,SMA50 / SMA150,SMA50 / SMA200,SMA150 / SMA200,Trending up,Sell Date,Holding Duration,Profit
-EXPE, 21.98B,2025-01-23, 176.52$,  1.73,  2.57,2,20,  0.96,  1.15,  1.21,  1.20,  1.26,  1.05,  1.04,N/A,N/A,N/A
-GWRE, 16.31B,2025-01-23, 204.60$,  5.12,  3.62,31,30,  1.11,  1.22,  1.32,  1.10,  1.18,  1.08,  1.04,N/A,N/A,N/A
-MMYT, 11.83B,2025-01-23, 109.44$,  4.06,  2.07,9,2,  0.99,  1.09,  1.17,  1.11,  1.18,  1.07,  1.05,N/A,N/A,N/A
-NTRS, 19.69B,2025-01-23, 108.69$,  2.12,  2.01,35,20,  1.04,  1.16,  1.20,  1.12,  1.16,  1.03,  1.03,N/A,N/A,N/A
-TKO, 12.72B,2025-01-23, 151.56$,  2.98,  2.20,3650,31,  1.10,  1.23,  1.29,  1.12,  1.17,  1.05,  1.06,N/A,N/A,N/A
+Ticker,Market Cap,Date,Close Price,Price change,Volume / Avg,Last max price,Last max volume,Close / SMA50,Close / SMA150,Close / SMA200,SMA50 / SMA150,SMA50 / SMA200,SMA150 / SMA200,Trending up,Beta,Sell Date,Holding Duration,Profit
+GWRE, 16.24B,2025-01-23, 204.60$,  5.12,  3.62,31,30,  1.11,  1.22,  1.32,  1.10,  1.18,  1.08,  1.04,1.309,2025-02-14,22,3.6901%
+MMYT, 11.70B,2025-01-23, 109.44$,  4.06,  2.07,9,2,  0.99,  1.09,  1.17,  1.11,  1.18,  1.07,  1.05,1.363,2025-01-27,4,-4.9159%
+NTRS, 19.78B,2025-01-23, 108.69$,  2.12,  2.01,35,20,  1.04,  1.16,  1.20,  1.12,  1.16,  1.03,  1.03,1.093,2025-02-10,18,1.3249%
+AVERAGE,,,,,,,,,,,,,,,,,14.67,0.0330% (0.8250%)

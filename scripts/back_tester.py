@@ -32,7 +32,7 @@ def screen_stocks(PRICE_DATA):
         timestamp = find_closest_date(PRICE_DATA, date_str)
         if timestamp != last_ts:
             filtered_price_date, date = rs_ranking.main(PRICE_DATA, date_str)
-            back_test(filtered_price_date, date)
+            back_test(PRICE_DATA, date)
             last_ts = timestamp
 
         current_date += relativedelta(days=1)

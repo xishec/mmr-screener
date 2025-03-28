@@ -230,14 +230,16 @@ def load_prices_from_yahoo(char):
     base_delay = 2  # seconds
 
     tickers = ([ticker for ticker in get_tickers_from_nasdaq()
-                if (ticker == "SPY" or ticker.lower().startswith(char.lower()))]
-               + [REFERENCE_TICKER])
+                if (ticker.lower().startswith(char.lower()))]
+               + ["SPY", "VIX"])
 
     print("*** Loading Stocks from Yahoo Finance ***")
     for idx, ticker in enumerate(tickers):
         retry_count = 0
         success = False
 
+        r_start = 0
+        ticker_data = None
         while retry_count < max_retries and not success:
             r_start = time.time()
 

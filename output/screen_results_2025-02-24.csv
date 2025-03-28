@@ -1,0 +1,4 @@
+Ticker,Market Cap,Date,Close Price,Price change,Volume / Avg,Last max price,Last max volume,Close / SMA50,Close / SMA150,Close / SMA200,SMA50 / SMA150,SMA50 / SMA200,SMA150 / SMA200,Trending up,Beta,Sell Date,Holding Duration,Profit
+LYV, 29.60B,2025-02-24, 154.62$,  2.34,  1.51,4,1,  1.11,  1.30,  1.37,  1.16,  1.23,  1.06,  1.05,1.384,2025-02-25,1,-6.5709%
+MKC, 21.69B,2025-02-24,  81.22$,  1.59,  1.72,49,19,  1.06,  1.04,  1.07,  0.99,  1.01,  1.02,  1.01,0.711,2025-03-06,10,0.7757%
+AVERAGE,,,,,,,,,,,,,,,,,5.50,-2.8976% (-85.7923%)

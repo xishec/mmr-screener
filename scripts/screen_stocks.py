@@ -95,24 +95,28 @@ def get_change_on_date(prices, target_date):
     return None
 
 
-def get_market_cap(ticker_symbol):
+def get_market_cap_beta(ticker_symbol):
     global market_cap_cache
     # Check if market cap is already cached
     if ticker_symbol in market_cap_cache:
-        return market_cap_cache[ticker_symbol]
+        market_cap = market_cap_cache[ticker_symbol]["market_cap"]
+        beta = market_cap_cache[ticker_symbol]["beta"]
+        return market_cap, beta
 
     for _ in range(2):
         try:
             ticker = yf.Ticker(ticker_symbol)
             info = ticker.info
             market_cap = info.get("marketCap")
+            beta = info.get("beta")
             if market_cap is None:
                 market_cap = 0
-            market_cap_cache[ticker_symbol] = market_cap
-            return market_cap
+            market_cap_cache.setdefault(ticker_symbol, {})["market_cap"] = market_cap
+            market_cap_cache[ticker_symbol]["beta"] = beta
+            return market_cap, beta
         except Exception:
-            time.sleep(2)
-    return 0
+            time.sleep(1)
+    return 0, 0
 
 
 def screen(filtered_price_date, end_date):
@@ -167,16 +171,25 @@ def screen(filtered_price_date, end_date):
         volume_volume100 = volume / avg_volume100 if avg_volume100 else 0
         is_breakout = price_change >= 1.5 and volume_volume100 >= 1.5
 
+        # if vix < 22
+        # vix = request.security("CBOE:VIX", "D", close)
+        # vix_sma20 = ta.sma(vix, 20)
+        # vix_below_threshold = vix < 20 and vix < vix_sma20
+
+        # if not big price change last 3 days
+
         if score >= 5 and is_breakout:
-            market_cap_billion = get_market_cap(ticker) / 1e9
-            if 10 < market_cap_billion < 100:
+            market_cap, beta = get_market_cap_beta(ticker)
+            market_cap_billion = market_cap / 1e9
+            if beta is not None and 10 < market_cap_billion < 300 and 1.4 >= beta >= 0.6:
                 date_string = datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d')
                 results.append(
                     (ticker, f"{market_cap_billion:>6.2f}B", date_string, f"{latest_close_price:>7.2f}$",
                      f"{price_change:>6.2f}", f"{volume_volume100:>6.2f}", last_max_price, last_max_volume,
                      f"{close_sma50:>6.2f}", f"{close_sma150:>6.2f}", f"{close_sma200:>6.2f}",
                      f"{sma50_sma150:>6.2f}", f"{sma50_sma200:>6.2f}", f"{sma150_sma200:>6.2f}",
-                     f"{trending_up:>6.2f}", "N/A", "N/A", "N/A")),
+                     f"{trending_up:>6.2f}", beta,
+                     "N/A", "N/A", "N/A")),
     print()
 
     # Write CSV file with defined column headers.
@@ -185,7 +198,8 @@ def screen(filtered_price_date, end_date):
                                "Price change", "Volume / Avg", "Last max price", "Last max volume",
                                "Close / SMA50", "Close / SMA150", "Close / SMA200",
                                "SMA50 / SMA150", "SMA50 / SMA200", "SMA150 / SMA200",
-                               "Trending up", "Sell Date", "Holding Duration", "Profit"])
+                               "Trending up", "Beta",
+                               "Sell Date", "Holding Duration", "Profit"])
     df = df.sort_values((["Ticker"]), ascending=True)
 
     output_path = os.path.join(os.path.dirname(DIR), 'output', f'screen_results_{end_date}.csv')

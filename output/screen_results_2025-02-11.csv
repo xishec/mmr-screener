@@ -1,0 +1,4 @@
+Ticker,Market Cap,Date,Close Price,Price change,Volume / Avg,Last max price,Last max volume,Close / SMA50,Close / SMA150,Close / SMA200,SMA50 / SMA150,SMA50 / SMA200,SMA150 / SMA200,Trending up,Beta,Sell Date,Holding Duration,Profit
+CHKP, 25.07B,2025-02-11, 218.52$,  1.78,  1.72,8,5,  1.14,  1.16,  1.22,  1.02,  1.07,  1.05,  1.02,0.619,2025-02-21,10,-0.7871%
+DB, 49.04B,2025-02-11,  19.65$,  1.68,  1.85,8,8,  1.08,  1.16,  1.17,  1.06,  1.07,  1.01,  1.03,1.188,2025-03-04,21,6.8193%
+AVERAGE,,,,,,,,,,,,,,,,,15.50,3.0161% (101.3240%)
