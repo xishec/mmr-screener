@@ -52,7 +52,7 @@ def load_csv(end_date):
             with open(path, mode='r') as csv_file:
                 csv_reader = csv.reader(csv_file)
                 rows = list(csv_reader)
-                first_half_rows = rows[1:len(rows) // 2 + 1]
+                first_half_rows = rows[1:len(rows) // 4 + 1]
             return first_half_rows
     return None
 
@@ -165,9 +165,9 @@ def screen(filtered_price_date, end_date):
 
         avg_volume100 = find_avg_volume(price_history[ticker], 100)
         volume_volume100 = volume / avg_volume100 if avg_volume100 else 0
-        is_breakout = price_change >= 1.5 and volume_volume100 >= 2
+        is_breakout = price_change >= 1.5 and volume_volume100 >= 1.5
 
-        if score >= 6 and is_breakout:
+        if score >= 5 and is_breakout:
             market_cap_billion = get_market_cap(ticker) / 1e9
             if 10 < market_cap_billion < 100:
                 date_string = datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d')

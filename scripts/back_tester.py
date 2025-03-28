@@ -18,15 +18,21 @@ def calculate_sma(prices, window):
 
 
 def screen_stocks(PRICE_DATA):
-    today = datetime.datetime.strptime("2025-01-01", "%Y-%m-%d")
-    current_date = today - relativedelta(years=1)
+    today = datetime.datetime.today()
+    start_2025 = datetime.datetime.strptime("2025-01-01", "%Y-%m-%d")
 
+    # current_date = today - relativedelta(years=1)
+    current_date = start_2025
+    end_date = today
+
+    # last_ts and timestamp make sure we only process each friday once
     last_ts = None
-    while current_date <= today:
+    while current_date <= end_date:
         date_str = current_date.strftime("%Y-%m-%d")
         timestamp = find_closest_date(PRICE_DATA, date_str)
         if timestamp != last_ts:
-            rs_ranking.main(PRICE_DATA, date_str)
+            filtered_price_date, date = rs_ranking.main(PRICE_DATA, date_str)
+            back_test(filtered_price_date, date)
             last_ts = timestamp
 
         current_date += relativedelta(days=1)
@@ -167,10 +173,10 @@ def simulate():
             writer.writerow(row)
 
 
-def back_test(PRICE_DATA):
+def back_test(PRICE_DATA, end_date):
     DIR = os.path.dirname(os.path.realpath(__file__))
     output_dir = os.path.join(os.path.dirname(DIR), 'output')
-    file_path = os.path.join(output_dir, 'screen_results.csv')
+    file_path = os.path.join(output_dir, f'screen_results_{end_date}.csv')
     global_holding_days = []
     global_profits = []
 
@@ -241,8 +247,7 @@ def back_test(PRICE_DATA):
 def main():
     PRICE_DATA = rs_ranking.load_data()
     screen_stocks(PRICE_DATA)
-    back_test(PRICE_DATA)
-    simulate()
+    # simulate()
 
 
 if __name__ == "__main__":

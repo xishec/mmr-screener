@@ -1,0 +1,6 @@
+Ticker,Market Cap,Date,Close Price,Price change,Volume / Avg,Last max price,Last max volume,Close / SMA50,Close / SMA150,Close / SMA200,SMA50 / SMA150,SMA50 / SMA200,SMA150 / SMA200,Trending up,Sell Date,Holding Duration,Profit
+COKE, 11.31B,2025-01-17,1383.74$,  2.95,  2.47,3650,81,  1.10,  1.13,  1.21,  1.03,  1.10,  1.07,  1.04,N/A,N/A,N/A
+FITB, 26.70B,2025-01-17,  44.34$,  1.74,  2.18,20,17,  0.99,  1.06,  1.10,  1.07,  1.11,  1.04,  1.02,N/A,N/A,N/A
+JD, 64.47B,2025-01-17,  39.00$,  4.18,  1.87,25,26,  1.07,  1.19,  1.22,  1.11,  1.14,  1.02,  1.04,N/A,N/A,N/A
+RCL, 59.58B,2025-01-17, 240.97$,  2.22,  1.58,21,17,  1.03,  1.27,  1.36,  1.23,  1.32,  1.07,  1.07,N/A,N/A,N/A
+STT, 26.61B,2025-01-17,  97.63$,  2.02,  1.93,1,17,  1.01,  1.12,  1.17,  1.11,  1.16,  1.04,  1.04,N/A,N/A,N/A

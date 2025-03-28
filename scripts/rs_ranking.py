@@ -1,6 +1,7 @@
 import gzip
 import itertools
 import json
+import math
 import os
 import string
 import sys
@@ -46,7 +47,10 @@ def relative_strength(closes: pd.Series, closes_ref: pd.Series):
     rs_stock = strength(closes)
     rs_ref = strength(closes_ref)
     rs = (1 + rs_stock) / (1 + rs_ref) * 100
-    rs = int(rs * 100) / 100  # round to 2 decimals
+    if math.isnan(rs):
+        rs = 0.0
+    else:
+        rs = int(rs * 100) / 100
     return rs
 
 
@@ -72,8 +76,9 @@ def quarters_perf(closes: pd.Series, n):
 
 def rankings(PRICE_DATA, end_date):
     output_dir = os.path.join(os.path.dirname(DIR), 'output')
+    output_path = os.path.join(output_dir, f'rs_stocks_{end_date}.csv')
     original_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
-    for i in range(0, 11):
+    for i in range(0, 1):
         try_date = original_date - datetime.timedelta(days=i)
         try_date_str = try_date.strftime("%Y-%m-%d")
         output_path = os.path.join(output_dir, f'rs_stocks_{try_date_str}.csv')
@@ -218,7 +223,7 @@ def main(PRICE_DATA=None, date_override=None):
     rankings(filtered_price_date, end_date)
     screen_stocks.main(filtered_price_date, end_date)
 
-    return end_date
+    return filtered_price_date, end_date
 
 
 if __name__ == "__main__":
