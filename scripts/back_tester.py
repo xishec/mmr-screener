@@ -45,7 +45,7 @@ import datetime
 
 
 def check_stop_loss(start_timestamp, candles_dict):
-    MA_PERIOD = 10  # Period for moving average calculation
+    MA_PERIOD = 15  # Period for moving average calculation
     buy_timestamp = -1
     purchase_price = -1
     max_close = -1
@@ -65,7 +65,7 @@ def check_stop_loss(start_timestamp, candles_dict):
             close_prices.pop(0)
 
         ts_int = int(ts)
-        if ts_int < start_timestamp:
+        if ts_int < start_timestamp + 86400 * 30:
             continue
 
         # Initial purchase

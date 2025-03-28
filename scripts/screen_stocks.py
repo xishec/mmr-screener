@@ -1,7 +1,7 @@
 import os
 import datetime
 import sys
-
+from dateutil.relativedelta import relativedelta
 import yfinance as yf
 import csv
 import time
@@ -131,7 +131,8 @@ def get_market_cap_beta(ticker_symbol):
     if ticker_symbol in market_cap_cache:
         market_cap = market_cap_cache[ticker_symbol]["market_cap"]
         beta = market_cap_cache[ticker_symbol]["beta"]
-        return market_cap, beta
+        next_earning = market_cap_cache[ticker_symbol]["next_earning"]
+        return market_cap, beta, next_earning
 
     for _ in range(2):
         try:
@@ -139,14 +140,21 @@ def get_market_cap_beta(ticker_symbol):
             info = ticker.info
             market_cap = info.get("marketCap")
             beta = info.get("beta")
+            next_earning = ticker.calendar["Earnings Date"][0].strftime("%Y-%m-%d")
             if market_cap is None:
                 market_cap = 0
             market_cap_cache.setdefault(ticker_symbol, {})["market_cap"] = market_cap
             market_cap_cache[ticker_symbol]["beta"] = beta
-            return market_cap, beta
+            market_cap_cache[ticker_symbol]["next_earning"] = next_earning
+            return market_cap, beta, next_earning
         except Exception:
-            time.sleep(1)
-    return 0, 0
+            if _ == 1:
+                time.sleep(1)
+            else:
+                market_cap_cache.setdefault(ticker_symbol, {})["market_cap"] = 0
+                market_cap_cache[ticker_symbol]["beta"] = 0
+                market_cap_cache[ticker_symbol]["next_earning"] = None
+    return 0, 0, None
 
 
 def screen(filtered_price_date, end_date):
@@ -206,29 +214,35 @@ def screen(filtered_price_date, end_date):
 
         is_breakout = price_change > 0.5 and last_max_price > 60 and max_mov5 <= 3 and max_mov100 <= 5 and volume_volume100 >= 1
 
-        if score >= 6 and is_breakout:
-            market_cap, beta = get_market_cap_beta(ticker)
-            market_cap_billion = market_cap / 1e9
-            if beta is not None and 5 < market_cap_billion < 300 and 1.6 >= beta >= 0.4 and close_sma10 > 1.05:
-                vix_ticker = "^VIX"
-                vix = price_history[vix_ticker]["candles"][-1]["close"]
-                vix_sma20 = calculate_sma(price_history[vix_ticker], 5)
-                if vix < 22 and vix < vix_sma20:
-                    date_string = datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d')
-                    results.append(
-                        (ticker, f"{market_cap_billion:>6.2f}B", date_string, f"{latest_close_price:>7.2f}$",
-                         f"{price_change:>6.2f}", f"{volume_volume100:>6.2f}", last_max_price, last_max_volume,
-                         f"{close_sma50:>6.2f}", f"{close_sma150:>6.2f}", f"{close_sma200:>6.2f}",
-                         f"{sma50_sma150:>6.2f}", f"{sma50_sma200:>6.2f}", f"{sma150_sma200:>6.2f}",
-                         f"{trending_up:>6.2f}", beta, f"{max_mov5:>6.2f}", f"{max_mov100:>6.2f}",
-                         f"{vix:>6.2f}", f"{vix_sma20:>6.2f}", f"{close_sma10:>6.2f}",
-                         "N/A", "N/A", "N/A", "N/A")),
-    print()
+        vix_ticker = "^VIX"
+        vix = price_history[vix_ticker]["candles"][-1]["close"]
+        vix_sma20 = calculate_sma(price_history[vix_ticker], 5)
+        if vix > 22 or vix > vix_sma20:
+            continue
 
-    # Write CSV file with defined column headers.
+        if score >= 6 and is_breakout:
+            market_cap, beta, next_earning = get_market_cap_beta(ticker)
+            if market_cap == 0: continue
+
+            market_cap_billion = market_cap / 1e9
+            next_earning_date = datetime.datetime.strptime(next_earning, "%Y-%m-%d")
+            now_date = datetime.datetime.fromtimestamp(date)
+            if (beta is not None and 5 < market_cap_billion < 300 and 1.6 >= beta >= 0.4 and close_sma10 > 1.05):
+                # and now_date < next_earning_date - relativedelta(days=30)):
+                date_string = now_date.strftime('%Y-%m-%d')
+                results.append(
+                    (ticker, f"{market_cap_billion:>6.2f}B", date_string, f"{latest_close_price:>7.2f}$",
+                     f"{price_change:>6.2f}", f"{volume_volume100:>6.2f}", last_max_price, last_max_volume,
+                     f"{close_sma50:>6.2f}", f"{close_sma150:>6.2f}", f"{close_sma200:>6.2f}",
+                     f"{sma50_sma150:>6.2f}", f"{sma50_sma200:>6.2f}", f"{sma150_sma200:>6.2f}",
+                     f"{trending_up:>6.2f}", beta, f"{max_mov5:>6.2f}", f"{max_mov100:>6.2f}",
+                     f"{vix:>6.2f}", f"{vix_sma20:>6.2f}", f"{close_sma10:>6.2f}",
+                     "N/A", "N/A", "N/A", "N/A")),
+
+    save_market_cap_cache()
 
     if len(results) == 0:
-        print()
+        print("\n")
         return
 
     df = pd.DataFrame(results,
@@ -243,12 +257,8 @@ def screen(filtered_price_date, end_date):
 
     output_path = os.path.join(os.path.dirname(DIR), 'screen_results', f'screen_results_{end_date}.csv')
     df.to_csv(output_path, index=False)
-    if (len(df) > 0):
-        print(df)
-    else:
-        print("No stocks found")
-    print()
-    save_market_cap_cache()
+    print(df)
+    print("\n")
 
 
 def main(filtered_price_date=None, end_date=None):
