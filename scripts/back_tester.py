@@ -25,8 +25,8 @@ def screen_stocks(PRICE_DATA):
     today = datetime.datetime.today()
 
     # current_date = today - relativedelta(years=1)
-    current_date = s2022
-    end_date = s2023
+    current_date = s2024
+    end_date = today
 
     # last_ts and timestamp make sure we only process each friday once
     last_ts = None
@@ -96,7 +96,7 @@ def simulate():
     timeline = []  # new: timeline list to record simulation state per date
 
     DIR = os.path.dirname(os.path.realpath(__file__))
-    output_dir = os.path.join(os.path.dirname(DIR), 'output')
+    output_dir = os.path.join(os.path.dirname(DIR), 'screen_results')
     file_path = os.path.join(output_dir, 'screen_results.csv')
     dates = {}
     with open(file_path, newline='') as csvfile:
@@ -180,7 +180,7 @@ def simulate():
 
 def back_test(PRICE_DATA, end_date):
     DIR = os.path.dirname(os.path.realpath(__file__))
-    output_dir = os.path.join(os.path.dirname(DIR), 'output')
+    output_dir = os.path.join(os.path.dirname(DIR), 'screen_results')
     file_path = os.path.join(output_dir, f'screen_results_{end_date}.csv')
     global_holding_days = []
     global_profits = []

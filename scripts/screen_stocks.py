@@ -11,8 +11,8 @@ import json
 from scripts import rs_ranking
 
 DIR = os.path.dirname(os.path.realpath(__file__))
-OUTPUT_DIR = os.path.join(os.path.dirname(DIR), 'output')
-CACHE_FILE = os.path.join(OUTPUT_DIR, 'market_cap_cache.json')
+OUTPUT_DIR = os.path.join(os.path.dirname(DIR), 'data_persist')
+CACHE_FILE = os.path.join(OUTPUT_DIR, '_market_cap_cache.json')
 
 pd.set_option('display.max_rows', None)
 pd.set_option('display.width', None)
@@ -42,12 +42,11 @@ market_cap_cache = load_market_cap_cache()
 
 
 def load_csv(end_date):
-    output_dir = os.path.join(os.path.dirname(DIR), 'output')
     original_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
     for i in range(0, 11):
         try_date = original_date - datetime.timedelta(days=i)
         try_date_str = try_date.strftime("%Y-%m-%d")
-        path = os.path.join(os.path.dirname(DIR), 'output', f'rs_stocks_{try_date_str}.csv')
+        path = os.path.join(os.path.dirname(DIR), 'rs_stocks', f'rs_stocks_{try_date_str}.csv')
         if os.path.exists(path):
             with open(path, mode='r') as csv_file:
                 csv_reader = csv.reader(csv_file)
@@ -93,20 +92,35 @@ def get_change_on_date(prices, target_date):
         if candle['datetime'] == target_date:
             this_close = candles[i]['close']
             last_close = candles[i - 1]['close']
+            if last_close == 0: return 0
             return (this_close - last_close) / last_close
     return None
 
 
 def get_close_avg_movement_last_period(prices, period, shift_back=1):
     candles = prices['candles'][(-period + 1):]
-    changes = [(candles[i]['close'] - candles[i - 1]['close']) / candles[i - 1]['close'] for i, _ in enumerate(candles)]
+    changes = []
+    for i in range(1, len(candles)):
+        prev_close = candles[i - 1]['close']
+        if prev_close == 0:
+            change = 0  # or use `continue` to skip this iteration
+        else:
+            change = (candles[i]['close'] - prev_close) / prev_close
+        changes.append(change)
     sum_abs = sum(abs(change) for change in changes)
     return sum_abs / period
 
 
 def get_close_max_movement_last_period(prices, period):
     candles = prices['candles'][(-period + 1):]
-    changes = [(candles[i]['close'] - candles[i - 1]['close']) / candles[i - 1]['close'] for i, _ in enumerate(candles)]
+    changes = []
+    for i in range(1, len(candles)):
+        prev_close = candles[i - 1]['close']
+        if prev_close == 0:
+            change = 0  # or use `continue` to skip this iteration
+        else:
+            change = (candles[i]['close'] - prev_close) / prev_close
+        changes.append(change)
     max_abs = max(abs(change) for change in changes)
     return max_abs
 
@@ -146,6 +160,7 @@ def screen(filtered_price_date, end_date):
         ticker = row[0]
         print(f"Screening stocks {ticker} \r{i + 1} / {total}, {(i + 1) / total * 100:.2f}% ", end="", flush=True)
 
+        sma10 = calculate_sma(price_history[ticker], 10)
         sma50 = calculate_sma(price_history[ticker], 50)
         sma150 = calculate_sma(price_history[ticker], 150)
         sma200 = calculate_sma(price_history[ticker], 200)
@@ -159,6 +174,7 @@ def screen(filtered_price_date, end_date):
         last_max_price = find_last_max_price(price_history[ticker], latest_close_price)
         last_max_volume = find_last_max_volume(price_history[ticker], volume)
 
+        close_sma10 = latest_close_price / sma10 if sma10 else 0
         close_sma50 = latest_close_price / sma50 if sma50 else 0
         close_sma150 = latest_close_price / sma150 if sma150 else 0
         close_sma200 = latest_close_price / sma200 if sma200 else 0
@@ -185,26 +201,27 @@ def screen(filtered_price_date, end_date):
 
         avg_volume100 = find_avg_volume(price_history[ticker], 100)
         volume_volume100 = volume / avg_volume100 if avg_volume100 else 0
-        avg_mov7 = get_close_avg_movement_last_period(price_history[ticker], 30) * 100
-        max_mov7 = get_close_max_movement_last_period(price_history[ticker], 30) * 100
+        max_mov5 = get_close_max_movement_last_period(price_history[ticker], 5) * 100
+        max_mov100 = get_close_max_movement_last_period(price_history[ticker], 100) * 100
 
-        is_breakout = price_change > 1 and last_max_price > 180 and max_mov7 <= 4 and volume_volume100 >= 0.5
+        is_breakout = price_change > 0.5 and last_max_price > 60 and max_mov5 <= 3 and max_mov100 <= 5 and volume_volume100 >= 1
 
-        if score >= 7 and is_breakout:
+        if score >= 6 and is_breakout:
             market_cap, beta = get_market_cap_beta(ticker)
             market_cap_billion = market_cap / 1e9
-            if beta is not None and 5 < market_cap_billion < 200 and 1.4 >= beta >= 0.6:
+            if beta is not None and 5 < market_cap_billion < 300 and 1.6 >= beta >= 0.4 and close_sma10 > 1.05:
                 vix_ticker = "^VIX"
                 vix = price_history[vix_ticker]["candles"][-1]["close"]
-                vix_sma20 = calculate_sma(price_history[vix_ticker], 20)
-                if vix < 20 and vix < vix_sma20:
+                vix_sma20 = calculate_sma(price_history[vix_ticker], 5)
+                if vix < 22 and vix < vix_sma20:
                     date_string = datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d')
                     results.append(
                         (ticker, f"{market_cap_billion:>6.2f}B", date_string, f"{latest_close_price:>7.2f}$",
                          f"{price_change:>6.2f}", f"{volume_volume100:>6.2f}", last_max_price, last_max_volume,
                          f"{close_sma50:>6.2f}", f"{close_sma150:>6.2f}", f"{close_sma200:>6.2f}",
                          f"{sma50_sma150:>6.2f}", f"{sma50_sma200:>6.2f}", f"{sma150_sma200:>6.2f}",
-                         f"{trending_up:>6.2f}", beta, f"{avg_mov7:>6.2f}", f"{max_mov7:>6.2f}",
+                         f"{trending_up:>6.2f}", beta, f"{max_mov5:>6.2f}", f"{max_mov100:>6.2f}",
+                         f"{vix:>6.2f}", f"{vix_sma20:>6.2f}", f"{close_sma10:>6.2f}",
                          "N/A", "N/A", "N/A", "N/A")),
     print()
 
@@ -219,11 +236,12 @@ def screen(filtered_price_date, end_date):
                                "Price change", "Volume / Avg", "Last max price", "Last max volume",
                                "Close / SMA50", "Close / SMA150", "Close / SMA200",
                                "SMA50 / SMA150", "SMA50 / SMA200", "SMA150 / SMA200",
-                               "Trending up", "Beta", "Avg mov7", "Max mov7",
+                               "Trending up", "Beta", "Max mov5", "Max mov30",
+                               "VIX", "VIX SMA20", "Close / SMA10",
                                "Sell Date", "Holding Duration", "Profit", "Max Profit"])
     df = df.sort_values((["Ticker"]), ascending=True)
 
-    output_path = os.path.join(os.path.dirname(DIR), 'output', f'screen_results_{end_date}.csv')
+    output_path = os.path.join(os.path.dirname(DIR), 'screen_results', f'screen_results_{end_date}.csv')
     df.to_csv(output_path, index=False)
     if (len(df) > 0):
         print(df)

@@ -39,8 +39,8 @@ TITLE_3M = "3 Months Ago"
 TITLE_6M = "6 Months Ago"
 TITLE_RS = "Relative Strength"
 
-if not os.path.exists('../output'):
-    os.makedirs('../output')
+if not os.path.exists('../rs_stocks'):
+    os.makedirs('../rs_stocks')
 
 
 def relative_strength(closes: pd.Series, closes_ref: pd.Series):
@@ -75,7 +75,7 @@ def quarters_perf(closes: pd.Series, n):
 
 
 def rankings(PRICE_DATA, end_date):
-    output_dir = os.path.join(os.path.dirname(DIR), 'output')
+    output_dir = os.path.join(os.path.dirname(DIR), 'rs_stocks')
     output_path = os.path.join(output_dir, f'rs_stocks_{end_date}.csv')
     original_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
     for i in range(0, 11):
@@ -148,13 +148,20 @@ def rankings(PRICE_DATA, end_date):
 def find_closest_date(PRICE_DATA, target_date_str):
     target_ts = int(datetime.datetime.strptime(target_date_str, "%Y-%m-%d").timestamp())
 
+    # find max candles
+    max_candles_length = 0
+    max_candles = None
     for data in PRICE_DATA.values():
         candles = data.get("candles", [])
-        if candles:
-            _, closest_candle = min(enumerate(candles), key=lambda x: abs(x[1]["datetime"] - target_ts))
-            return closest_candle["datetime"]
+        if len(candles) > max_candles_length:
+            max_candles = candles
 
-    return None
+    def key_function(item):
+        index, candle = item
+        return abs(candle["datetime"] - target_ts)
+    _, closest_candle = min(enumerate(max_candles), key=key_function)
+
+    return closest_candle["datetime"]
 
 
 def filter_price_data_by_index(price_data: dict, timestamp: int) -> dict:
