@@ -18,12 +18,15 @@ def calculate_sma(prices, window):
 
 
 def screen_stocks(PRICE_DATA):
+    s2022 = datetime.datetime.strptime("2022-01-01", "%Y-%m-%d")
+    s2023 = datetime.datetime.strptime("2023-01-01", "%Y-%m-%d")
+    s2024 = datetime.datetime.strptime("2024-01-01", "%Y-%m-%d")
+    s2025 = datetime.datetime.strptime("2025-01-01", "%Y-%m-%d")
     today = datetime.datetime.today()
-    start_2025 = datetime.datetime.strptime("2025-01-01", "%Y-%m-%d")
 
     # current_date = today - relativedelta(years=1)
-    current_date = start_2025
-    end_date = today
+    current_date = s2022
+    end_date = s2023
 
     # last_ts and timestamp make sure we only process each friday once
     last_ts = None
@@ -81,11 +84,12 @@ def check_stop_loss(start_timestamp, candles_dict):
 
         ma_value = sum(close_prices) / MA_PERIOD
         if current_close < ma_value:
-            return buy_timestamp, ts_int, (current_close - purchase_price) / purchase_price, 0
+            profit = (current_close - purchase_price) / purchase_price
+            return buy_timestamp, ts_int, profit, 0
 
     # If we reach the end without selling, calculate final profit/loss
     last_ts = sorted_timestamps[-1]
-    return buy_timestamp, int(last_ts), (candles_dict[last_ts]["close"] - purchase_price) / purchase_price
+    return buy_timestamp, int(last_ts), (candles_dict[last_ts]["close"] - purchase_price) / purchase_price, 0
 
 
 def simulate():
@@ -181,6 +185,8 @@ def back_test(PRICE_DATA, end_date):
     global_holding_days = []
     global_profits = []
 
+    if not os.path.exists(file_path):
+        return
     with open(file_path, mode="r", newline="") as csv_file:
         reader = csv.DictReader(csv_file)
         rows = list(reader)
@@ -219,7 +225,7 @@ def back_test(PRICE_DATA, end_date):
         avg_profit = total_profit / count
         r = sum(global_profits) / len(global_profits)
         d = sum(global_holding_days) / len(global_holding_days)
-        n = 365 / d
+        n = 365 / d if d > 0 else 0
         f = (1 + r) ** n
         annualized_return = (f - 1) * 100
 
@@ -238,7 +244,7 @@ def back_test(PRICE_DATA, end_date):
     if len(global_holding_days) > 0 and len(global_profits) > 0:
         r = sum(global_profits) / len(global_profits)
         d = sum(global_holding_days) / len(global_holding_days)
-        n = 365 / d
+        n = 365 / d if d > 0 else 0
         f = (1 + r) ** n
         annualized_return = (f - 1) * 100
         print(f"Global Average Profit: {r * 100:.4f}%")

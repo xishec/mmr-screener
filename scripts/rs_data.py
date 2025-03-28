@@ -46,10 +46,6 @@ def cfg(key):
             return None
 
 
-REFERENCE_TICKER = cfg("REFERENCE_TICKER")
-ALL_STOCKS = cfg("USE_ALL_LISTED_STOCKS")
-
-
 def get_tickers_from_nasdaq():
     print("*** Loading Stocks from Nasdaq ***")
     url = "https://www.nasdaqtrader.com/dynamic/symdir/nasdaqtraded.txt"
@@ -231,7 +227,7 @@ def load_prices_from_yahoo(char):
 
     tickers = ([ticker for ticker in get_tickers_from_nasdaq()
                 if (ticker.lower().startswith(char.lower()))]
-               + ["SPY", "VIX"])
+               + ["SPY", "^VIX"])
 
     print("*** Loading Stocks from Yahoo Finance ***")
     for idx, ticker in enumerate(tickers):
@@ -281,7 +277,7 @@ def load_prices_from_yahoo(char):
 
 
 def main():
-    char = "x" if len(sys.argv) <= 1 else sys.argv[1]
+    char = "v" if len(sys.argv) <= 1 else sys.argv[1]
     load_prices_from_yahoo(char)
 
 

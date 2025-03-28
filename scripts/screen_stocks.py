@@ -88,21 +88,26 @@ def find_avg_volume(prices, window):
 
 
 def get_change_on_date(prices, target_date):
-    for candle in prices['candles']:
+    candles = prices['candles']
+    for i, candle in enumerate(candles):
         if candle['datetime'] == target_date:
-            return (candle['close'] - candle['open']) / candle['close']
+            this_close = candles[i]['close']
+            last_close = candles[i - 1]['close']
+            return (this_close - last_close) / last_close
     return None
 
 
 def get_close_avg_movement_last_period(prices, period, shift_back=1):
-    close_prices = [candle['close'] for candle in prices['candles'][-period:]]
-    sum_abs = sum(abs(price) for price in close_prices)
+    candles = prices['candles'][(-period + 1):]
+    changes = [(candles[i]['close'] - candles[i - 1]['close']) / candles[i - 1]['close'] for i, _ in enumerate(candles)]
+    sum_abs = sum(abs(change) for change in changes)
     return sum_abs / period
 
 
 def get_close_max_movement_last_period(prices, period):
-    close_prices = [candle['close'] for candle in prices['candles'][-period:]]
-    max_abs = max(abs(price) for price in close_prices)
+    candles = prices['candles'][(-period + 1):]
+    changes = [(candles[i]['close'] - candles[i - 1]['close']) / candles[i - 1]['close'] for i, _ in enumerate(candles)]
+    max_abs = max(abs(change) for change in changes)
     return max_abs
 
 
@@ -180,20 +185,18 @@ def screen(filtered_price_date, end_date):
 
         avg_volume100 = find_avg_volume(price_history[ticker], 100)
         volume_volume100 = volume / avg_volume100 if avg_volume100 else 0
-        avg_mov7 = get_close_avg_movement_last_period(price_history[ticker], 7)
-        max_mov7 = get_close_max_movement_last_period(price_history[ticker], 7)
+        avg_mov7 = get_close_avg_movement_last_period(price_history[ticker], 30) * 100
+        max_mov7 = get_close_max_movement_last_period(price_history[ticker], 30) * 100
 
-        # is_breakout = price_change >= 1.5 and volume_volume100 >= 1.5
-        is_breakout = price_change > 0 and last_max_price > 60
-
-        # if not big price change last 3 days
+        is_breakout = price_change > 1 and last_max_price > 180 and max_mov7 <= 4 and volume_volume100 >= 0.5
 
         if score >= 7 and is_breakout:
             market_cap, beta = get_market_cap_beta(ticker)
             market_cap_billion = market_cap / 1e9
-            if beta is not None and 10 < market_cap_billion < 300 and 1.4 >= beta >= 0.6:
-                vix = price_history["VIX"]["candles"][-1]["close"]
-                vix_sma20 = calculate_sma(price_history["VIX"], 20)
+            if beta is not None and 5 < market_cap_billion < 200 and 1.4 >= beta >= 0.6:
+                vix_ticker = "^VIX"
+                vix = price_history[vix_ticker]["candles"][-1]["close"]
+                vix_sma20 = calculate_sma(price_history[vix_ticker], 20)
                 if vix < 20 and vix < vix_sma20:
                     date_string = datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d')
                     results.append(
@@ -206,6 +209,11 @@ def screen(filtered_price_date, end_date):
     print()
 
     # Write CSV file with defined column headers.
+
+    if len(results) == 0:
+        print()
+        return
+
     df = pd.DataFrame(results,
                       columns=["Ticker", "Market Cap", "Date", "Close Price",
                                "Price change", "Volume / Avg", "Last max price", "Last max volume",
@@ -216,10 +224,7 @@ def screen(filtered_price_date, end_date):
     df = df.sort_values((["Ticker"]), ascending=True)
 
     output_path = os.path.join(os.path.dirname(DIR), 'output', f'screen_results_{end_date}.csv')
-    if not os.path.exists(output_path):
-        df.to_csv(output_path, index=False)
-    else:
-        df.to_csv(output_path, index=False, mode='a', header=False)
+    df.to_csv(output_path, index=False)
     if (len(df) > 0):
         print(df)
     else:
