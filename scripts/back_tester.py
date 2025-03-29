@@ -45,7 +45,7 @@ import datetime
 
 
 def check_stop_loss(start_timestamp, candles_dict):
-    MA_PERIOD = 15  # Period for moving average calculation
+    MA_PERIOD = 50  # Period for moving average calculation
     buy_timestamp = -1
     purchase_price = -1
     max_close = -1
@@ -55,7 +55,7 @@ def check_stop_loss(start_timestamp, candles_dict):
                                key=lambda ts: datetime.datetime.fromtimestamp(int(ts)))
 
     if not sorted_timestamps:
-        return -1, -1, 0, 0
+        return -1, -1, 0, "Error"
 
     for ts in sorted_timestamps:
         current_close = candles_dict[ts]["close"]
@@ -65,7 +65,7 @@ def check_stop_loss(start_timestamp, candles_dict):
             close_prices.pop(0)
 
         ts_int = int(ts)
-        if ts_int < start_timestamp + 86400 * 30:
+        if ts_int < start_timestamp:
             continue
 
         # Initial purchase
@@ -75,21 +75,31 @@ def check_stop_loss(start_timestamp, candles_dict):
             max_close = current_close
             continue
 
+        if ts_int < start_timestamp:
+            continue
+
+        profit = (current_close - purchase_price) / purchase_price
+
+        if profit > 0.07:
+            return buy_timestamp, ts_int, profit, f"Stop win, max: {profit * 100:.2f}%"
+
         # Update trailing stop loss: update max_close and check if current close dropped 7% below max
         max_close = max(max_close, current_close)
         if current_close < max_close * 0.93:
-            profit = (current_close - purchase_price) / purchase_price
             max_profit = (max_close - purchase_price) / purchase_price
-            return buy_timestamp, ts_int, profit, max_profit
+            return buy_timestamp, ts_int, profit, f"Stop loss, max: {max_profit * 100:.2f}%"
 
-        ma_value = sum(close_prices) / MA_PERIOD
-        if current_close < ma_value:
-            profit = (current_close - purchase_price) / purchase_price
-            return buy_timestamp, ts_int, profit, 0
+        # ma_value = sum(close_prices) / MA_PERIOD
+        # if current_close < ma_value:
+        #     max_profit = (max_close - purchase_price) / purchase_price
+        #     return buy_timestamp, ts_int, profit, f"Less than MA, max: {max_profit * 100:.2f}%"
 
     # If we reach the end without selling, calculate final profit/loss
     last_ts = sorted_timestamps[-1]
-    return buy_timestamp, int(last_ts), (candles_dict[last_ts]["close"] - purchase_price) / purchase_price, 0
+    max_profit = (max_close - purchase_price) / purchase_price
+    return (buy_timestamp, int(last_ts),
+            (candles_dict[last_ts]["close"] - purchase_price) / purchase_price,
+            f"End of data, max: {max_profit * 100:.2f}%")
 
 
 def simulate():
@@ -181,7 +191,7 @@ def simulate():
 def back_test(PRICE_DATA, end_date):
     DIR = os.path.dirname(os.path.realpath(__file__))
     output_dir = os.path.join(os.path.dirname(DIR), 'screen_results')
-    file_path = os.path.join(output_dir, f'screen_results_{end_date}.csv')
+    file_path = os.path.join(output_dir, f'screen_results.csv')
     global_holding_days = []
     global_profits = []
 
@@ -196,7 +206,7 @@ def back_test(PRICE_DATA, end_date):
     count = 0
     has_average = False
     for row in rows:
-        if row["Ticker"] == "AVERAGE":
+        if row["Ticker"] == "AVERAGE" or row["Sell Date"] != "N/A":
             has_average = True
             continue
 
@@ -206,14 +216,14 @@ def back_test(PRICE_DATA, end_date):
         start_timestamp = int(datetime.datetime.strptime(screening_date, "%Y-%m-%d").timestamp())
         candles = PRICE_DATA[row["Ticker"]]["candles"]
         candles_dict = {str(candle["datetime"]): candle for candle in candles}
-        buy_timestamp, sell_timestamp, profit, max_profit = check_stop_loss(start_timestamp, candles_dict)
+        buy_timestamp, sell_timestamp, profit, sell_reason = check_stop_loss(start_timestamp, candles_dict)
         sell_date = datetime.datetime.fromtimestamp(sell_timestamp).strftime("%Y-%m-%d")
         row["Sell Date"] = sell_date
         row["Profit"] = f"{profit * 100:.4f}%"
         holding_days = (datetime.datetime.fromtimestamp(sell_timestamp) - datetime.datetime.fromtimestamp(
             buy_timestamp)).days
         row["Holding Duration"] = str(holding_days)
-        row["Max Profit"] = f"{max_profit * 100:.4f}%"
+        row["Sell reason"] = sell_reason
         total_holding_days += holding_days
         total_profit += profit
         count += 1

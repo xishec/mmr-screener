@@ -212,7 +212,7 @@ def screen(filtered_price_date, end_date):
         max_mov5 = get_close_max_movement_last_period(price_history[ticker], 5) * 100
         max_mov100 = get_close_max_movement_last_period(price_history[ticker], 100) * 100
 
-        is_breakout = price_change > 0.5 and last_max_price > 60 and max_mov5 <= 3 and max_mov100 <= 5 and volume_volume100 >= 1
+        # is_breakout = price_change > 0.5 and last_max_price > 60 and max_mov5 <= 3 and max_mov100 <= 5 and volume_volume100 >= 1
 
         vix_ticker = "^VIX"
         vix = price_history[vix_ticker]["candles"][-1]["close"]
@@ -220,14 +220,14 @@ def screen(filtered_price_date, end_date):
         if vix > 22 or vix > vix_sma20:
             continue
 
-        if score >= 6 and is_breakout:
+        if score >= 7 and max_mov100 < 4 and close_sma10 > 1.035:
             market_cap, beta, next_earning = get_market_cap_beta(ticker)
             if market_cap == 0: continue
 
             market_cap_billion = market_cap / 1e9
             next_earning_date = datetime.datetime.strptime(next_earning, "%Y-%m-%d")
             now_date = datetime.datetime.fromtimestamp(date)
-            if (beta is not None and 5 < market_cap_billion < 300 and 1.6 >= beta >= 0.4 and close_sma10 > 1.05):
+            if (beta is not None and 10 < market_cap_billion < 100 and 1.6 >= beta >= 0.4):
                 # and now_date < next_earning_date - relativedelta(days=30)):
                 date_string = now_date.strftime('%Y-%m-%d')
                 results.append(
@@ -252,10 +252,10 @@ def screen(filtered_price_date, end_date):
                                "SMA50 / SMA150", "SMA50 / SMA200", "SMA150 / SMA200",
                                "Trending up", "Beta", "Max mov5", "Max mov30",
                                "VIX", "VIX SMA20", "Close / SMA10",
-                               "Sell Date", "Holding Duration", "Profit", "Max Profit"])
+                               "Sell Date", "Holding Duration", "Profit", "Sell reason"])
     df = df.sort_values((["Ticker"]), ascending=True)
 
-    output_path = os.path.join(os.path.dirname(DIR), 'screen_results', f'screen_results_{end_date}.csv')
+    output_path = os.path.join(os.path.dirname(DIR), 'screen_results', f'screen_results.csv')
     df.to_csv(output_path, index=False)
     print(df)
     print("\n")
