@@ -205,9 +205,10 @@ def back_test(PRICE_DATA, end_date):
     total_profit = 0
     count = 0
     has_average = False
-    for row in rows:
-        if row["Ticker"] == "AVERAGE" or row["Sell Date"] != "N/A":
-            has_average = True
+    index_to_pop = None
+    for i, row in enumerate(rows):
+        if row["Ticker"] == "AVERAGE":
+            index_to_pop = i
             continue
 
         screening_date = row["Date"]
@@ -230,7 +231,9 @@ def back_test(PRICE_DATA, end_date):
         global_holding_days.append(holding_days)
         global_profits.append(profit)
 
-    if count > 0 and not has_average:
+    if index_to_pop: rows.pop(index_to_pop)
+
+    if count > 0 and len(rows) > 0:
         avg_held = total_holding_days / count
         avg_profit = total_profit / count
         r = sum(global_profits) / len(global_profits)

@@ -256,7 +256,9 @@ def screen(filtered_price_date, end_date):
     df = df.sort_values((["Ticker"]), ascending=True)
 
     output_path = os.path.join(os.path.dirname(DIR), 'screen_results', f'screen_results.csv')
-    df.to_csv(output_path, index=False)
+    header = not os.path.exists(output_path)
+    df.to_csv(output_path, mode='a', index=False, header=header)
+
     print(df)
     print("\n")
 
