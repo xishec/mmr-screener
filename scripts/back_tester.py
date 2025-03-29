@@ -196,7 +196,7 @@ def simulate():
             writer.writerow(row)
 
 
-def back_test(PRICE_DATA, stop_gain, stop_loss):
+def back_test(PRICE_DATA, stop_gain=1.3, stop_loss=0):
     output_dir = os.path.join(os.path.dirname(DIR), 'screen_results')
     file_path = os.path.join(output_dir, f'screen_results.csv')
     global_holding_days = []
@@ -282,13 +282,13 @@ def main():
     if (just_testing):
         stop_loss = 0.0
         rows = []
-        while stop_loss <= 2.0:
+        while stop_loss <= 1.5:
             columns = []
             stop_gain = 0.0
-            while stop_gain <= 4.0:
+            while stop_gain <= 2.5:
                 columns.append(f"({stop_loss:.1f} {stop_gain:.1f}) {back_test(PRICE_DATA, stop_gain, stop_loss)}")
                 stop_gain = round(stop_gain + 0.1, 1)
-            stop_loss = round(stop_loss + 0.5, 1)
+            stop_loss = round(stop_loss + 0.1, 1)
             rows.append(columns)
     else:
         file_path = os.path.join(os.path.dirname(DIR), 'screen_results', 'screen_results.csv')
