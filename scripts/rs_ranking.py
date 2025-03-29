@@ -172,12 +172,15 @@ def filter_price_data_by_index(price_data: dict, timestamp: int) -> dict:
     filtered_data = {}
     for ticker, data in price_data.items():
         candles = data.get("candles", [])
-        # Filter candles with datetime less than or equal to timestamp
-        filtered_candles = [candle for candle in candles if candle["datetime"] <= timestamp]
-        # Copy the original data and update the candles list
-        new_data = data.copy()
-        new_data["candles"] = filtered_candles
-        filtered_data[ticker] = new_data
+        filtered_candles = []
+        for i, candle in enumerate(candles):
+            if candle["datetime"] <= timestamp:
+                continue
+            else:
+                filtered_candles = candles[:i]
+                break
+        if len(filtered_candles) > 0:
+            filtered_data[ticker] = {"candles": filtered_candles}
     return filtered_data
 
 
@@ -223,6 +226,7 @@ def main(PRICE_DATA=None, date_override=None):
     if len(sys.argv) > 1:
         date = sys.argv[1]
 
+    print(f"Filtering data...")
     timestamp = find_closest_date(PRICE_DATA, date)
     filtered_price_date = filter_price_data_by_index(PRICE_DATA, timestamp)
     start_date = (datetime.datetime.fromtimestamp(filtered_price_date["A"]["candles"][0]["datetime"])
