@@ -235,7 +235,7 @@ def main(PRICE_DATA=None, date_override=None):
                 .strftime('%Y-%m-%d'))
     print(f"Considering data from {start_date} to {end_date}")
 
-    # rankings(filtered_price_date, end_date)
+    rankings(filtered_price_date, end_date)
     screen_stocks.main(filtered_price_date, end_date)
 
     return filtered_price_date, end_date

@@ -43,7 +43,7 @@ def screen_stocks(PRICE_DATA):
             back_test(PRICE_DATA, date)
             last_ts = timestamp
 
-        current_date += relativedelta(days=15)
+        current_date += relativedelta(days=5)
 
 
 import datetime
@@ -88,7 +88,7 @@ def check_stop_loss(start_timestamp, candles_dict):
         profit = (current_close - purchase_price) / purchase_price
 
         min_close = min(min_close, current_close)
-        if profit > 0.04:
+        if profit > 0.03:
             min_profit = (min_close - purchase_price) / purchase_price
             return buy_timestamp, ts_int, profit, f"Gain, min: {min_profit * 100:.2f}%"
 
@@ -276,15 +276,15 @@ def back_test(PRICE_DATA, end_date):
 def main():
     PRICE_DATA = rs_ranking.load_data()
     file_path = os.path.join(os.path.dirname(DIR), 'screen_results', 'screen_results.csv')
-    # if os.path.exists(file_path):
-        # os.remove(file_path)
-    # screen_stocks(PRICE_DATA)
+    if os.path.exists(file_path):
+        os.remove(file_path)
+    screen_stocks(PRICE_DATA)
     # simulate()
 
-    # just calculate profit on existing screen_results.csv
-    today = datetime.datetime.today()
-    end_date = today - relativedelta(days=30)
-    back_test(PRICE_DATA, end_date)
+    # # just calculate profit on existing screen_results.csv
+    # today = datetime.datetime.today()
+    # end_date = today - relativedelta(days=30)
+    # back_test(PRICE_DATA, end_date)
 
 
 if __name__ == "__main__":
