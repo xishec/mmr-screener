@@ -20,6 +20,8 @@ def calculate_sma(prices, window):
 
 
 def screen_stocks(PRICE_DATA):
+    s2018 = datetime.datetime.strptime("2018-01-01", "%Y-%m-%d")
+    s2021 = datetime.datetime.strptime("2021-01-01", "%Y-%m-%d")
     s2021 = datetime.datetime.strptime("2021-01-01", "%Y-%m-%d")
     s2022 = datetime.datetime.strptime("2022-01-01", "%Y-%m-%d")
     s2023 = datetime.datetime.strptime("2023-01-01", "%Y-%m-%d")
@@ -28,7 +30,7 @@ def screen_stocks(PRICE_DATA):
     today = datetime.datetime.today()
 
     # current_date = today - relativedelta(years=1)
-    current_date = s2021
+    current_date = s2018
     end_date = today - relativedelta(days=30)
 
     # last_ts and timestamp make sure we only process each friday once

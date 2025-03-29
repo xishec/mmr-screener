@@ -149,16 +149,20 @@ def find_closest_date(PRICE_DATA, target_date_str):
     target_ts = int(datetime.datetime.strptime(target_date_str, "%Y-%m-%d").timestamp())
 
     # find max candles
-    max_candles_length = 0
     max_candles = None
+    min_timestamp = None
+
     for data in PRICE_DATA.values():
         candles = data.get("candles", [])
-        if len(candles) > max_candles_length:
+        timestamp = candles[0]["datetime"]
+        if min_timestamp is None or min_timestamp > timestamp:
+            min_timestamp = timestamp
             max_candles = candles
 
     def key_function(item):
         index, candle = item
         return abs(candle["datetime"] - target_ts)
+
     _, closest_candle = min(enumerate(max_candles), key=key_function)
 
     return closest_candle["datetime"]
