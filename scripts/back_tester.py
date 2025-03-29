@@ -29,7 +29,7 @@ def screen_stocks(PRICE_DATA):
 
     # current_date = today - relativedelta(years=1)
     current_date = s2021
-    end_date = today
+    end_date = today - relativedelta(days=30)
 
     # last_ts and timestamp make sure we only process each friday once
     last_ts = None
@@ -41,7 +41,7 @@ def screen_stocks(PRICE_DATA):
             back_test(PRICE_DATA, date)
             last_ts = timestamp
 
-        current_date += relativedelta(days=5)
+        current_date += relativedelta(days=15)
 
 
 import datetime
@@ -86,13 +86,13 @@ def check_stop_loss(start_timestamp, candles_dict):
         profit = (current_close - purchase_price) / purchase_price
 
         min_close = min(min_close, current_close)
-        if profit > 0.09:
+        if profit > 0.4:
             min_profit = (min_close - purchase_price) / purchase_price
             return buy_timestamp, ts_int, profit, f"Gain, min: {min_profit * 100:.2f}%"
 
         # Update trailing stop loss: update max_close and check if current close dropped 7% below max
         max_close = max(max_close, current_close)
-        if current_close < purchase_price * 0.97:
+        if current_close < purchase_price * 0.8:
             max_profit = (max_close - purchase_price) / purchase_price
             return buy_timestamp, ts_int, profit, f"Loss, max: {max_profit * 100:.2f}%"
 
@@ -268,6 +268,7 @@ def back_test(PRICE_DATA, end_date):
         print(f"Global Average Profit: {r * 100:.4f}%")
         print(f"Global Average Holding Days: {d:.2f}")
         print(f"Annualized Return: {annualized_return:.4f}%")
+        print("\n")
 
 
 def main():

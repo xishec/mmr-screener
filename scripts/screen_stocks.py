@@ -242,7 +242,6 @@ def screen(filtered_price_date, end_date):
     save_market_cap_cache()
 
     if len(results) == 0:
-        print("\n")
         return
 
     df = pd.DataFrame(results,
@@ -260,7 +259,6 @@ def screen(filtered_price_date, end_date):
     df.to_csv(output_path, mode='a', index=False, header=header)
 
     print(df)
-    print("\n")
 
 
 def main(filtered_price_date=None, end_date=None):
