@@ -216,11 +216,11 @@ def screen(filtered_price_date, end_date):
 
         vix_ticker = "^VIX"
         vix = price_history[vix_ticker]["candles"][-1]["close"]
-        vix_sma20 = calculate_sma(price_history[vix_ticker], 5)
-        if vix > 22 or vix > vix_sma20:
+        vix_sma20 = calculate_sma(price_history[vix_ticker], 20)
+        if vix > 17 or vix > vix_sma20:
             continue
 
-        if score >= 7 and max_mov100 < 4 and close_sma10 > 1.035:
+        if score >= 7 and max_mov100 < 4 and close_sma10 > 1.035 and price_change > 1:
             market_cap, beta, next_earning = get_market_cap_beta(ticker)
             if market_cap == 0: continue
 

@@ -9,6 +9,8 @@ import csv
 from scripts import rs_ranking
 from scripts.rs_ranking import find_closest_date
 
+DIR = os.path.dirname(os.path.realpath(__file__))
+
 
 def calculate_sma(prices, window):
     close_prices = [candle['close'] for candle in prices['candles']]
@@ -18,6 +20,7 @@ def calculate_sma(prices, window):
 
 
 def screen_stocks(PRICE_DATA):
+    s2021 = datetime.datetime.strptime("2021-01-01", "%Y-%m-%d")
     s2022 = datetime.datetime.strptime("2022-01-01", "%Y-%m-%d")
     s2023 = datetime.datetime.strptime("2023-01-01", "%Y-%m-%d")
     s2024 = datetime.datetime.strptime("2024-01-01", "%Y-%m-%d")
@@ -25,7 +28,7 @@ def screen_stocks(PRICE_DATA):
     today = datetime.datetime.today()
 
     # current_date = today - relativedelta(years=1)
-    current_date = s2024
+    current_date = s2021
     end_date = today
 
     # last_ts and timestamp make sure we only process each friday once
@@ -38,7 +41,7 @@ def screen_stocks(PRICE_DATA):
             back_test(PRICE_DATA, date)
             last_ts = timestamp
 
-        current_date += relativedelta(days=1)
+        current_date += relativedelta(days=5)
 
 
 import datetime
@@ -49,6 +52,7 @@ def check_stop_loss(start_timestamp, candles_dict):
     buy_timestamp = -1
     purchase_price = -1
     max_close = -1
+    min_close = -1
     close_prices = []
 
     sorted_timestamps = sorted(candles_dict.keys(),
@@ -73,6 +77,7 @@ def check_stop_loss(start_timestamp, candles_dict):
             buy_timestamp = ts_int
             purchase_price = current_close
             max_close = current_close
+            min_close = current_close
             continue
 
         if ts_int < start_timestamp:
@@ -80,14 +85,16 @@ def check_stop_loss(start_timestamp, candles_dict):
 
         profit = (current_close - purchase_price) / purchase_price
 
-        if profit > 0.07:
-            return buy_timestamp, ts_int, profit, f"Stop win, max: {profit * 100:.2f}%"
+        min_close = min(min_close, current_close)
+        if profit > 0.09:
+            min_profit = (min_close - purchase_price) / purchase_price
+            return buy_timestamp, ts_int, profit, f"Gain, min: {min_profit * 100:.2f}%"
 
         # Update trailing stop loss: update max_close and check if current close dropped 7% below max
         max_close = max(max_close, current_close)
-        if current_close < max_close * 0.93:
+        if current_close < purchase_price * 0.97:
             max_profit = (max_close - purchase_price) / purchase_price
-            return buy_timestamp, ts_int, profit, f"Stop loss, max: {max_profit * 100:.2f}%"
+            return buy_timestamp, ts_int, profit, f"Loss, max: {max_profit * 100:.2f}%"
 
         # ma_value = sum(close_prices) / MA_PERIOD
         # if current_close < ma_value:
@@ -105,7 +112,6 @@ def check_stop_loss(start_timestamp, candles_dict):
 def simulate():
     timeline = []  # new: timeline list to record simulation state per date
 
-    DIR = os.path.dirname(os.path.realpath(__file__))
     output_dir = os.path.join(os.path.dirname(DIR), 'screen_results')
     file_path = os.path.join(output_dir, 'screen_results.csv')
     dates = {}
@@ -189,7 +195,6 @@ def simulate():
 
 
 def back_test(PRICE_DATA, end_date):
-    DIR = os.path.dirname(os.path.realpath(__file__))
     output_dir = os.path.join(os.path.dirname(DIR), 'screen_results')
     file_path = os.path.join(output_dir, f'screen_results.csv')
     global_holding_days = []
@@ -267,6 +272,9 @@ def back_test(PRICE_DATA, end_date):
 
 def main():
     PRICE_DATA = rs_ranking.load_data()
+    file_path = os.path.join(os.path.dirname(DIR), 'screen_results', 'screen_results.csv')
+    if os.path.exists(file_path):
+        os.remove(file_path)
     screen_stocks(PRICE_DATA)
     # simulate()
 
