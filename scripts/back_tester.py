@@ -43,13 +43,13 @@ def screen_stocks(PRICE_DATA):
             back_test(PRICE_DATA, date)
             last_ts = timestamp
 
-        current_date += relativedelta(days=5)
+        current_date += relativedelta(days=1)
 
 
 import datetime
 
 
-def check_stop_loss(start_timestamp, candles_dict):
+def check_stop_loss(start_timestamp, candles_dict, stop_gain, stop_loss):
     MA_PERIOD = 50  # Period for moving average calculation
     buy_timestamp = -1
     purchase_price = -1
@@ -88,13 +88,13 @@ def check_stop_loss(start_timestamp, candles_dict):
         profit = (current_close - purchase_price) / purchase_price
 
         min_close = min(min_close, current_close)
-        if profit > 0.03:
+        if profit > stop_gain / 100:
             min_profit = (min_close - purchase_price) / purchase_price
             return buy_timestamp, ts_int, profit, f"Gain, min: {min_profit * 100:.2f}%"
 
         # Update trailing stop loss: update max_close and check if current close dropped 7% below max
         max_close = max(max_close, current_close)
-        if current_close < purchase_price * 0.97:
+        if current_close < purchase_price * (1 - stop_loss / 100):
             max_profit = (max_close - purchase_price) / purchase_price
             return buy_timestamp, ts_int, profit, f"Loss, max: {max_profit * 100:.2f}%"
 
@@ -196,7 +196,7 @@ def simulate():
             writer.writerow(row)
 
 
-def back_test(PRICE_DATA, end_date):
+def back_test(PRICE_DATA, stop_gain, stop_loss):
     output_dir = os.path.join(os.path.dirname(DIR), 'screen_results')
     file_path = os.path.join(output_dir, f'screen_results.csv')
     global_holding_days = []
@@ -224,7 +224,8 @@ def back_test(PRICE_DATA, end_date):
         start_timestamp = int(datetime.datetime.strptime(screening_date, "%Y-%m-%d").timestamp())
         candles = PRICE_DATA[row["Ticker"]]["candles"]
         candles_dict = {str(candle["datetime"]): candle for candle in candles}
-        buy_timestamp, sell_timestamp, profit, sell_reason = check_stop_loss(start_timestamp, candles_dict)
+        buy_timestamp, sell_timestamp, profit, sell_reason = check_stop_loss(start_timestamp, candles_dict,
+                                                                             stop_gain, stop_loss)
         sell_date = datetime.datetime.fromtimestamp(sell_timestamp).strftime("%Y-%m-%d")
         row["Sell Date"] = sell_date
         row["Profit"] = f"{profit * 100:.4f}%"
@@ -271,20 +272,29 @@ def back_test(PRICE_DATA, end_date):
         print(f"Global Average Holding Days: {d:.2f}")
         print(f"Annualized Return: {annualized_return:.4f}%")
         print("\n")
+    return f"{annualized_return:.2f}% in {d:.2f}d"
 
 
 def main():
     PRICE_DATA = rs_ranking.load_data()
-    file_path = os.path.join(os.path.dirname(DIR), 'screen_results', 'screen_results.csv')
-    if os.path.exists(file_path):
-        os.remove(file_path)
-    screen_stocks(PRICE_DATA)
-    # simulate()
+    just_testing = False;
 
-    # # just calculate profit on existing screen_results.csv
-    # today = datetime.datetime.today()
-    # end_date = today - relativedelta(days=30)
-    # back_test(PRICE_DATA, end_date)
+    if (just_testing):
+        stop_loss = 0.0
+        rows = []
+        while stop_loss <= 2.0:
+            columns = []
+            stop_gain = 0.0
+            while stop_gain <= 4.0:
+                columns.append(f"({stop_loss:.1f} {stop_gain:.1f}) {back_test(PRICE_DATA, stop_gain, stop_loss)}")
+                stop_gain = round(stop_gain + 0.1, 1)
+            stop_loss = round(stop_loss + 0.5, 1)
+            rows.append(columns)
+    else:
+        file_path = os.path.join(os.path.dirname(DIR), 'screen_results', 'screen_results.csv')
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        screen_stocks(PRICE_DATA)
 
 
 if __name__ == "__main__":
