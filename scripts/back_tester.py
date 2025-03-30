@@ -193,25 +193,25 @@ def back_test(PRICE_DATA, stop_gain=1, stop_loss=6):
 
 def main():
     PRICE_DATA = rs_ranking.load_data()
-    just_testing = False
-    # just_testing = True
+    # just_testing = False
+    just_testing = True
 
     if (just_testing):
-        # back_test(PRICE_DATA, 6, 1)
+        back_test(PRICE_DATA, 1, 0)
 
-        stop_loss = 0.0
-        rows = []
-        while stop_loss <= 15:
-            columns = []
-            stop_gain = 0.0
-            while stop_gain <= 20:
-                columns.append(f"({stop_loss:>4.1f} {stop_gain:>4.1f}) {back_test(PRICE_DATA, stop_gain, stop_loss):>25}")
-                stop_gain = round(stop_gain + 1, 1)
-            stop_loss = round(stop_loss + 0.5, 1)
-            rows.append(columns)
-
-        for row in rows:
-            print(" ".join(str(item) for item in row))
+        # stop_loss = 0.0
+        # rows = []
+        # while stop_loss <= 15:
+        #     columns = []
+        #     stop_gain = 0.0
+        #     while stop_gain <= 20:
+        #         columns.append(f"({stop_loss:>4.1f} {stop_gain:>4.1f}) {back_test(PRICE_DATA, stop_gain, stop_loss):>25}")
+        #         stop_gain = round(stop_gain + 1, 1)
+        #     stop_loss = round(stop_loss + 1, 1)
+        #     rows.append(columns)
+        #
+        # for row in rows:
+        #     print(" ".join(str(item) for item in row))
     else:
         file_path = os.path.join(os.path.dirname(DIR), 'screen_results', 'screen_results.csv')
         if os.path.exists(file_path):

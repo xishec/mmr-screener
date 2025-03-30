@@ -219,7 +219,7 @@ def screen(filtered_price_date, end_date):
         vix_sma20 = calculate_sma(price_history[vix_ticker], 20)
         if vix > 17 or vix > vix_sma20:
             # if vix > 22:
-            continue
+            break
 
         if score >= 7 and max_mov100 < 4 and close_sma10 > 1.035 and price_change > 1:
             # if score >= 7:

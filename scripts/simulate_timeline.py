@@ -59,7 +59,7 @@ def simulate():
 
         # buy attempt
         # money_out = current_cash / 1 / len(rows)
-        money_out = current_cash / len(rows)
+        money_out = current_cash / 1 / len(rows)
 
         trading_counter += 1
         for row in rows:
@@ -107,10 +107,26 @@ def simulate():
 
     # Add remaining holdings to cash
     for sell_date in list(holdings.keys()):
-        list_to_sell = holdings.get(sell_date)
-        for holding in list_to_sell:
-            current_cash += holding["money_in"]
-
+            list_to_sell = holdings.get(sell_date)
+            for holding in list_to_sell:
+                current_nb_holding -= 1
+                money_out = holding["money_out"]
+                money_in = holding["money_in"]
+                profit_percentage = holding["profit_percentage"]
+                current_cash += money_in
+                current_holding -= money_out
+                timeline.append({
+                    "Date": "End",
+                    "Action": "Sell",
+                    "Ticker": holding["ticker"],
+                    "Profit": f"{profit_percentage}%",
+                    "Cash": f"{current_cash:.2f}",
+                    "Cash Change": f"+{money_in:.2f}",
+                    "Holding": f"{current_holding:.2f} ({current_nb_holding})",
+                    "Holding Change": f"-{money_in:.2f}",
+                    "Total": f"{current_cash + current_holding:.2f}"
+                })
+            holdings.pop(sell_date)
     percentage = (current_cash - initial_cash) / initial_cash * 100
     print(f"{percentage:.2f}%, {zero_budget_counter} zero budget days / {trading_counter} trading days")
 
