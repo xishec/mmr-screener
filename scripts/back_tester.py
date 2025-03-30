@@ -25,6 +25,7 @@ def screen_stocks(PRICE_DATA):
     s2021 = datetime.datetime.strptime("2021-01-01", "%Y-%m-%d")
     s2022 = datetime.datetime.strptime("2022-01-01", "%Y-%m-%d")
     s2023 = datetime.datetime.strptime("2023-01-01", "%Y-%m-%d")
+    m2023 = datetime.datetime.strptime("2023-06-01", "%Y-%m-%d")
     s2024 = datetime.datetime.strptime("2024-01-01", "%Y-%m-%d")
     s2025 = datetime.datetime.strptime("2025-01-01", "%Y-%m-%d")
     today = datetime.datetime.today()
@@ -43,7 +44,7 @@ def screen_stocks(PRICE_DATA):
             back_test(PRICE_DATA)
             last_ts = timestamp
 
-        current_date += relativedelta(days=15)
+        current_date += relativedelta(days=1)
 
 
 import datetime
@@ -111,7 +112,7 @@ def check_stop_loss(start_timestamp, candles_dict, stop_gain, stop_loss):
             f"End of data, max: {max_profit * 100:.2f}%")
 
 
-def back_test(PRICE_DATA, stop_gain=1.3, stop_loss=0.0):
+def back_test(PRICE_DATA, stop_gain=1, stop_loss=6):
     output_dir = os.path.join(os.path.dirname(DIR), 'screen_results')
     file_path = os.path.join(output_dir, f'screen_results.csv')
     global_holding_days = []
@@ -192,19 +193,25 @@ def back_test(PRICE_DATA, stop_gain=1.3, stop_loss=0.0):
 
 def main():
     PRICE_DATA = rs_ranking.load_data()
-    just_testing = False;
+    just_testing = False
+    # just_testing = True
 
     if (just_testing):
+        # back_test(PRICE_DATA, 6, 1)
+
         stop_loss = 0.0
         rows = []
-        while stop_loss <= 1.5:
+        while stop_loss <= 15:
             columns = []
             stop_gain = 0.0
-            while stop_gain <= 2.5:
-                columns.append(f"({stop_loss:.1f} {stop_gain:.1f}) {back_test(PRICE_DATA, stop_gain, stop_loss)}")
-                stop_gain = round(stop_gain + 0.1, 1)
-            stop_loss = round(stop_loss + 0.1, 1)
+            while stop_gain <= 20:
+                columns.append(f"({stop_loss:>4.1f} {stop_gain:>4.1f}) {back_test(PRICE_DATA, stop_gain, stop_loss):>25}")
+                stop_gain = round(stop_gain + 1, 1)
+            stop_loss = round(stop_loss + 0.5, 1)
             rows.append(columns)
+
+        for row in rows:
+            print(" ".join(str(item) for item in row))
     else:
         file_path = os.path.join(os.path.dirname(DIR), 'screen_results', 'screen_results.csv')
         if os.path.exists(file_path):

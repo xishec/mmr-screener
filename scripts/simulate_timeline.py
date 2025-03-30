@@ -60,7 +60,6 @@ def simulate():
         # buy attempt
         # money_out = current_cash / 1 / len(rows)
         money_out = current_cash / len(rows)
-        print(money_out)
 
         trading_counter += 1
         for row in rows:
