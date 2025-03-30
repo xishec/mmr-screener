@@ -51,7 +51,7 @@ def load_csv(end_date):
             with open(path, mode='r') as csv_file:
                 csv_reader = csv.reader(csv_file)
                 rows = list(csv_reader)
-                first_half_rows = rows[1:len(rows) // 5 + 1]
+                first_half_rows = rows[1:len(rows) // 4 + 1]
             return first_half_rows
     return None
 
@@ -218,18 +218,18 @@ def screen(filtered_price_date, end_date):
         vix = price_history[vix_ticker]["candles"][-1]["close"]
         vix_sma20 = calculate_sma(price_history[vix_ticker], 20)
         # if vix > 17 or vix > vix_sma20:
-        if vix > 22:
+        if vix > 22 or vix > vix_sma20:
             continue
 
         # if score >= 7 and max_mov100 < 4 and close_sma10 > 1.035 and price_change > 1:
-        if score >= 7:
+        if score >= 7 and close_sma10 > 1.035 and price_change > 1:
             market_cap, beta, next_earning = get_market_cap_beta(ticker)
             if market_cap == 0: continue
 
             # next_earning_date = datetime.datetime.strptime(next_earning, "%Y-%m-%d")
             market_cap_billion = market_cap / 1e9
-            # if beta is not None and 10 < market_cap_billion < 100 and 1.6 >= beta >= 0.4:
-            if 10 < market_cap_billion < 100:
+            # if beta is not None and 10 < market_cap_billion < 500 and 1.6 >= beta >= 0.4:
+            if beta is not None and 10 < market_cap_billion and 1.5 >= beta >= 0.5:
                 # and now_date < next_earning_date - relativedelta(days=30)):
                 date_string = datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d')
                 results.append(
