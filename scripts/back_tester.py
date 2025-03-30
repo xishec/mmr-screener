@@ -40,10 +40,10 @@ def screen_stocks(PRICE_DATA):
         timestamp = find_closest_date(PRICE_DATA, date_str)
         if timestamp != last_ts:
             filtered_price_date, date = rs_ranking.main(PRICE_DATA, date_str)
-            back_test(PRICE_DATA, date)
+            back_test(PRICE_DATA)
             last_ts = timestamp
 
-        current_date += relativedelta(days=1)
+        current_date += relativedelta(days=15)
 
 
 import datetime
@@ -111,92 +111,7 @@ def check_stop_loss(start_timestamp, candles_dict, stop_gain, stop_loss):
             f"End of data, max: {max_profit * 100:.2f}%")
 
 
-def simulate():
-    timeline = []  # new: timeline list to record simulation state per date
-
-    output_dir = os.path.join(os.path.dirname(DIR), 'screen_results')
-    file_path = os.path.join(output_dir, 'screen_results.csv')
-    dates = {}
-    with open(file_path, newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            date_key = row.get("Date")
-            if date_key:
-                dates.setdefault(date_key, []).append(row)
-
-    initial_cash = 100
-    current_cash = initial_cash
-    holdings = {}
-    zero_budget_counter = 0
-    trading_counter = 0
-
-    for current_date, rows in dates.items():
-        # Release holdings if sell date has passed
-        for sell_date in list(holdings.keys()):
-            if current_date > sell_date:
-                tickers_dict_to_sell = holdings.pop(sell_date)
-                for ticker, profit in tickers_dict_to_sell.items():
-                    current_cash += profit
-                    holding_value = sum(sum(profits.values()) for profits in holdings.values())
-                    timeline.append({
-                        "Date": current_date,
-                        "Action": "Sell",
-                        "Ticker": ticker,
-                        "Current Cash": f"{current_cash:.2f}",
-                        "Holding Value": f"{holding_value:.2f}",
-                        "Portfolio Value": f"{current_cash + holding_value:.2f}"
-                    })
-
-        cash_per_share = current_cash * 1 / len(rows)
-        trading_counter += 1
-        for row in rows:
-            ticker = row.get("Ticker")
-            if cash_per_share == 0:
-                zero_budget_counter += 1
-                holding_value = sum(sum(profits.values()) for profits in holdings.values())
-                timeline.append({
-                    "Date": current_date,
-                    "Action": "No Cash",
-                    "Ticker": ticker,
-                    "Current Cash": f"{current_cash:.2f}",
-                    "Holding Value": f"{holding_value:.2f}",
-                    "Portfolio Value": f"{current_cash + holding_value:.2f}"
-                })
-                continue
-
-            current_cash -= cash_per_share
-            percentage = float(row["Profit"].replace("%", ""))
-            future_profit = cash_per_share * (1 + percentage / 100)
-            sell_date = row.get("Sell Date")
-            holdings.setdefault(sell_date, {})[ticker] = future_profit
-            holding_value = sum(sum(profits.values()) for profits in holdings.values())
-            timeline.append({
-                "Date": current_date,
-                "Action": "Buy",
-                "Ticker": ticker,
-                "Current Cash": f"{current_cash:.2f}",
-                "Holding Value": f"{holding_value:.2f}",
-                "Portfolio Value": f"{current_cash + holding_value:.2f}"
-            })
-
-    # Add remaining holdings to budget
-    for profits in holdings.values():
-        current_cash += sum(profits.values())
-
-    percentage = (current_cash - initial_cash) / initial_cash * 100
-    print(f"{percentage:.2f}%, {zero_budget_counter} zero budget days / {trading_counter} trading days")
-
-    # New: write simulation timeline to CSV file with header and rows
-    timeline_file = os.path.join(output_dir, 'screen_results_timeline.csv')
-    with open(timeline_file, mode='w', newline='') as csvfile:
-        fieldnames = ["Date", "Action", "Ticker", "Current Cash", "Holding Value", "Portfolio Value"]
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for row in timeline:
-            writer.writerow(row)
-
-
-def back_test(PRICE_DATA, stop_gain=1.3, stop_loss=0):
+def back_test(PRICE_DATA, stop_gain=1.3, stop_loss=0.0):
     output_dir = os.path.join(os.path.dirname(DIR), 'screen_results')
     file_path = os.path.join(output_dir, f'screen_results.csv')
     global_holding_days = []
