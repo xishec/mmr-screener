@@ -51,7 +51,7 @@ def load_csv(end_date):
             with open(path, mode='r') as csv_file:
                 csv_reader = csv.reader(csv_file)
                 rows = list(csv_reader)
-                first_half_rows = rows[1:len(rows) // 3 + 1]
+                first_half_rows = rows[:len(rows) // 2 + 1]
             return first_half_rows
     return None
 
@@ -165,6 +165,14 @@ def screen(filtered_price_date, end_date):
     filtered_rows = [row for row in first_half_rows if row[0] in price_history]
     total = len(filtered_rows)
     for i, row in enumerate(filtered_rows):
+        vix_ticker = "^VIX"
+        vix = price_history[vix_ticker]["candles"][-1]["close"]
+        vix_sma20 = calculate_sma(price_history[vix_ticker], 10)
+        if vix > 22:
+            # if vix > 20:
+            print(f"VIX is too high: {vix}, (SMA20 {vix_sma20})\n")
+            return
+
         ticker = row[0]
         print(f"Screening stocks {ticker} \r{i + 1} / {total}, {(i + 1) / total * 100:.2f}% ", end="", flush=True)
 
@@ -212,25 +220,13 @@ def screen(filtered_price_date, end_date):
         max_mov5 = get_close_max_movement_last_period(price_history[ticker], 5) * 100
         max_mov100 = get_close_max_movement_last_period(price_history[ticker], 100) * 100
 
-        # is_breakout = price_change > 0.5 and last_max_price > 60 and max_mov5 <= 3 and max_mov100 <= 5 and volume_volume100 >= 1
+        is_breakout = price_change > 1 and last_max_price > 60 and max_mov5 <= 3 and volume_volume100 >= 1.5
 
-        vix_ticker = "^VIX"
-        vix = price_history[vix_ticker]["candles"][-1]["close"]
-        vix_sma20 = calculate_sma(price_history[vix_ticker], 20)
-        if vix > 17 or vix > vix_sma20:
-            # if vix > 22:
-            break
-
-        if score >= 7 and max_mov100 < 4 and close_sma10 > 1.035 and price_change > 1:
-            # if score >= 7:
+        if score >= 7 and close_sma10 > 1.035 and is_breakout:
             market_cap, beta, next_earning = get_market_cap_beta(ticker)
             if market_cap == 0: continue
-
-            # next_earning_date = datetime.datetime.strptime(next_earning, "%Y-%m-%d")
             market_cap_billion = market_cap / 1e9
-            if beta is not None and 10 < market_cap_billion and 1.6 >= beta >= 0.4:
-                # if 10 < market_cap_billion < 100:
-                # and now_date < next_earning_date - relativedelta(days=30)):
+            if 10 < market_cap_billion:
                 date_string = datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d')
                 results.append(
                     (ticker, f"{market_cap_billion:>6.2f}B", date_string, f"{latest_close_price:>7.2f}$",
@@ -242,8 +238,9 @@ def screen(filtered_price_date, end_date):
                      "N/A", "N/A", "N/A", "N/A")),
 
     save_market_cap_cache()
-
+    print("\n")
     if len(results) == 0:
+        print("No stocks passed\n")
         return
 
     df = pd.DataFrame(results,
@@ -261,6 +258,7 @@ def screen(filtered_price_date, end_date):
     df.to_csv(output_path, mode='a', index=False, header=header)
 
     print(df)
+    print("\n")
 
 
 def main(filtered_price_date=None, end_date=None):

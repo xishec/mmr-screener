@@ -41,7 +41,7 @@ def screen_stocks(PRICE_DATA):
         timestamp = find_closest_date(PRICE_DATA, date_str)
         if timestamp != last_ts:
             filtered_price_date, date = rs_ranking.main(PRICE_DATA, date_str)
-            back_test(PRICE_DATA)
+            # back_test(PRICE_DATA)
             last_ts = timestamp
 
         current_date += relativedelta(days=1)
@@ -50,7 +50,7 @@ def screen_stocks(PRICE_DATA):
 import datetime
 
 
-def check_stop_loss(start_timestamp, candles_dict, stop_gain, stop_loss):
+def check_stop_loss(start_timestamp, candles_dict, stop_loss, stop_gain):
     MA_PERIOD = 50  # Period for moving average calculation
     buy_timestamp = -1
     purchase_price = -1
@@ -91,13 +91,13 @@ def check_stop_loss(start_timestamp, candles_dict, stop_gain, stop_loss):
         min_close = min(min_close, current_close)
         if profit > stop_gain / 100:
             min_profit = (min_close - purchase_price) / purchase_price
-            return buy_timestamp, ts_int, profit, f"Gain, min: {min_profit * 100:.2f}%"
+            return buy_timestamp, ts_int, profit, f"{stop_gain} gain, min: {min_profit * 100:.2f}%"
 
         # Update trailing stop loss: update max_close and check if current close dropped 7% below max
         max_close = max(max_close, current_close)
-        if current_close < purchase_price * (1 - stop_loss / 100):
+        if current_close < max_close * (1 - stop_loss / 100):
             max_profit = (max_close - purchase_price) / purchase_price
-            return buy_timestamp, ts_int, profit, f"Loss, max: {max_profit * 100:.2f}%"
+            return buy_timestamp, ts_int, profit, f"{stop_loss} loss, max: {max_profit * 100:.2f}%"
 
         # ma_value = sum(close_prices) / MA_PERIOD
         # if current_close < ma_value:
@@ -112,14 +112,14 @@ def check_stop_loss(start_timestamp, candles_dict, stop_gain, stop_loss):
             f"End of data, max: {max_profit * 100:.2f}%")
 
 
-def back_test(PRICE_DATA, stop_gain=1, stop_loss=6):
+def back_test(PRICE_DATA, stop_loss=9, stop_gain=0):
     output_dir = os.path.join(os.path.dirname(DIR), 'screen_results')
     file_path = os.path.join(output_dir, f'screen_results.csv')
     global_holding_days = []
     global_profits = []
 
     if not os.path.exists(file_path):
-        return
+        return 0
     with open(file_path, mode="r", newline="") as csv_file:
         reader = csv.DictReader(csv_file)
         rows = list(reader)
@@ -141,7 +141,7 @@ def back_test(PRICE_DATA, stop_gain=1, stop_loss=6):
         candles = PRICE_DATA[row["Ticker"]]["candles"]
         candles_dict = {str(candle["datetime"]): candle for candle in candles}
         buy_timestamp, sell_timestamp, profit, sell_reason = check_stop_loss(start_timestamp, candles_dict,
-                                                                             stop_gain, stop_loss)
+                                                                             stop_loss, stop_gain)
         sell_date = datetime.datetime.fromtimestamp(sell_timestamp).strftime("%Y-%m-%d")
         row["Sell Date"] = sell_date
         row["Profit"] = f"{profit * 100:.4f}%"
@@ -193,25 +193,26 @@ def back_test(PRICE_DATA, stop_gain=1, stop_loss=6):
 
 def main():
     PRICE_DATA = rs_ranking.load_data()
-    # just_testing = False
-    just_testing = True
+    just_testing = False
+    # just_testing = True
 
     if (just_testing):
-        back_test(PRICE_DATA, 1, 0)
+        # back_test(PRICE_DATA, 9, 0)
 
-        # stop_loss = 0.0
-        # rows = []
-        # while stop_loss <= 15:
-        #     columns = []
-        #     stop_gain = 0.0
-        #     while stop_gain <= 20:
-        #         columns.append(f"({stop_loss:>4.1f} {stop_gain:>4.1f}) {back_test(PRICE_DATA, stop_gain, stop_loss):>25}")
-        #         stop_gain = round(stop_gain + 1, 1)
-        #     stop_loss = round(stop_loss + 1, 1)
-        #     rows.append(columns)
-        #
-        # for row in rows:
-        #     print(" ".join(str(item) for item in row))
+        stop_loss = 0.0
+        rows = []
+        while stop_loss <= 10:
+            columns = []
+            stop_gain = 0.0
+            while stop_gain <= 40:
+                columns.append(
+                    f"({stop_loss:>4.1f} {stop_gain:>4.1f}) {back_test(PRICE_DATA, stop_loss, stop_gain):>25}")
+                stop_gain = round(stop_gain + 1, 1)
+            stop_loss = round(stop_loss + 1, 1)
+            rows.append(columns)
+
+        for row in rows:
+            print(" ".join(str(item) for item in row))
     else:
         file_path = os.path.join(os.path.dirname(DIR), 'screen_results', 'screen_results.csv')
         if os.path.exists(file_path):
