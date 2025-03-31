@@ -223,8 +223,8 @@ def main(PRICE_DATA=None, date_override=None):
     # date = "2023-11-20"
     if date_override is not None:
         date = date_override
-    if len(sys.argv) > 1:
-        date = sys.argv[1]
+    # if len(sys.argv) > 1:
+    #     date = sys.argv[1]
 
     print(f"Filtering data...")
     timestamp = find_closest_date(PRICE_DATA, date)
@@ -233,7 +233,7 @@ def main(PRICE_DATA=None, date_override=None):
                   .strftime("%Y-%m-%d"))
     end_date = (datetime.datetime.fromtimestamp(filtered_price_date["A"]["candles"][-1]["datetime"])
                 .strftime('%Y-%m-%d'))
-    print(f"Considering data from {start_date} to {end_date}")
+    print(f"Loaded data from {start_date} to {end_date}")
 
     rankings(filtered_price_date, end_date)
     screen_stocks.main(filtered_price_date, end_date)

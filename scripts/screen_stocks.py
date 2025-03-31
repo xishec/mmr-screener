@@ -220,9 +220,9 @@ def screen(filtered_price_date, end_date):
         max_mov5 = get_close_max_movement_last_period(price_history[ticker], 5) * 100
         max_mov100 = get_close_max_movement_last_period(price_history[ticker], 100) * 100
 
-        is_breakout = price_change > 1 and last_max_price > 60 and max_mov5 <= 3 and volume_volume100 >= 1.5
+        is_breakout = price_change > 1 and last_max_price > 60 and max_mov5 <= 3 and volume_volume100 >= 2
 
-        if score >= 7 and close_sma10 > 1.035 and is_breakout:
+        if score >= 6 and close_sma10 > 1.035 and is_breakout:
             market_cap, beta, next_earning = get_market_cap_beta(ticker)
             if market_cap == 0: continue
             market_cap_billion = market_cap / 1e9
