@@ -31,7 +31,7 @@ def screen_stocks(PRICE_DATA):
     today = datetime.datetime.today()
 
     # current_date = today - relativedelta(years=1)
-    current_date = s2025
+    current_date = s2024
     end_date = today
 
     # last_ts and timestamp make sure we only process each friday once
