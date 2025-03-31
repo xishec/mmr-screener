@@ -78,7 +78,7 @@ def rankings(PRICE_DATA, end_date):
     output_dir = os.path.join(os.path.dirname(DIR), 'rs_stocks')
     output_path = os.path.join(output_dir, f'rs_stocks_{end_date}.csv')
     original_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
-    for i in range(0, 11):
+    for i in range(0, 1):
         try_date = original_date - datetime.timedelta(days=i)
         try_date_str = try_date.strftime("%Y-%m-%d")
         output_path = os.path.join(output_dir, f'rs_stocks_{try_date_str}.csv')
@@ -174,10 +174,10 @@ def filter_price_data_by_index(price_data: dict, timestamp: int) -> dict:
         candles = data.get("candles", [])
         filtered_candles = []
         for i, candle in enumerate(candles):
-            if candle["datetime"] <= timestamp:
+            if candle["datetime"] < timestamp:
                 continue
             else:
-                filtered_candles = candles[:i]
+                filtered_candles = candles[:i + 1]
                 break
         if len(filtered_candles) > 0:
             filtered_data[ticker] = {"candles": filtered_candles}
@@ -215,19 +215,20 @@ def load_data():
     return PRICE_DATA
 
 
-def main(PRICE_DATA=None, date_override=None):
+def main(PRICE_DATA=None, timestamp_override=None):
     if PRICE_DATA is None:
         PRICE_DATA = load_data()
 
     date = datetime.date.today().strftime("%Y-%m-%d")
     # date = "2023-11-20"
-    if date_override is not None:
-        date = date_override
+    if timestamp_override is not None:
+        timestamp = timestamp_override
+    else:
+        timestamp = find_closest_date(PRICE_DATA, date)
+
     # if len(sys.argv) > 1:
     #     date = sys.argv[1]
 
-    print(f"Filtering data...")
-    timestamp = find_closest_date(PRICE_DATA, date)
     filtered_price_date = filter_price_data_by_index(PRICE_DATA, timestamp)
     start_date = (datetime.datetime.fromtimestamp(filtered_price_date["A"]["candles"][0]["datetime"])
                   .strftime("%Y-%m-%d"))

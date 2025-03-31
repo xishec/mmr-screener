@@ -71,6 +71,15 @@ def find_last_max_price(prices, max_value):
     return 3650
 
 
+def find_last_last_max_price(prices, max_value):
+    close_prices = [candle['close'] for candle in prices['candles']]
+    for index, price in enumerate(reversed(close_prices)):
+        if index == 0: continue
+        if index == 1: continue
+        if price >= max_value: return index
+    return 3650
+
+
 def find_last_max_volume(prices, max_value):
     volume = [candle['volume'] for candle in prices['candles']]
     for index, volume in enumerate(reversed(volume)):
@@ -168,10 +177,10 @@ def screen(filtered_price_date, end_date):
         vix_ticker = "^VIX"
         vix = price_history[vix_ticker]["candles"][-1]["close"]
         vix_sma20 = calculate_sma(price_history[vix_ticker], 10)
-        if vix > 22:
-            # if vix > 20:
-            print(f"VIX is too high: {vix}, (SMA20 {vix_sma20})\n")
-            return
+        # if vix > 22 or vix > vix_sma20:
+        # if vix > 20:
+        # print(f"VIX is too high: {vix}, (SMA20 {vix_sma20})\n")
+        # return
 
         ticker = row[0]
         print(f"Screening stocks {ticker} \r{i + 1} / {total}, {(i + 1) / total * 100:.2f}% ", end="", flush=True)
@@ -183,11 +192,13 @@ def screen(filtered_price_date, end_date):
         sma200_22 = calculate_sma(price_history[ticker], 200, 22)
 
         latest_close_price = price_history[ticker]["candles"][-1]["close"]
+        yesterday_close_price = price_history[ticker]["candles"][-2]["close"]
         volume = price_history[ticker]["candles"][-1]["volume"]
         date = price_history[ticker]["candles"][-1]["datetime"]
         price_change = get_change_on_date(price_history[ticker], date) * 100
 
         last_max_price = find_last_max_price(price_history[ticker], latest_close_price)
+        last_max_price_yesterday = find_last_last_max_price(price_history[ticker], yesterday_close_price)
         last_max_volume = find_last_max_volume(price_history[ticker], volume)
 
         close_sma10 = latest_close_price / sma10 if sma10 else 0
@@ -220,13 +231,17 @@ def screen(filtered_price_date, end_date):
         max_mov5 = get_close_max_movement_last_period(price_history[ticker], 5) * 100
         max_mov100 = get_close_max_movement_last_period(price_history[ticker], 100) * 100
 
-        is_breakout = price_change > 1 and last_max_price > 60 and max_mov5 <= 3 and volume_volume100 >= 2
+        # is_breakout = price_change > 1 and volume_volume100 >= 2
+        # last_max_price > 90 -> all-time high since 90d
+        # 90 > last_max_price_yesterday -> we had yesterday's price within 90d
+        is_breakout = 0 < price_change < 8 and last_max_price > 90 > last_max_price_yesterday > 2
 
-        if score >= 6 and close_sma10 > 1.035 and is_breakout:
+        # if score >= 6 and close_sma10 > 1.035 and is_breakout:
+        if score >= 6 and is_breakout:
             market_cap, beta, next_earning = get_market_cap_beta(ticker)
             if market_cap == 0: continue
             market_cap_billion = market_cap / 1e9
-            if 10 < market_cap_billion:
+            if 10 < market_cap_billion < 100:
                 date_string = datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d')
                 results.append(
                     (ticker, f"{market_cap_billion:>6.2f}B", date_string, f"{latest_close_price:>7.2f}$",

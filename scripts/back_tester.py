@@ -31,8 +31,8 @@ def screen_stocks(PRICE_DATA):
     today = datetime.datetime.today()
 
     # current_date = today - relativedelta(years=1)
-    current_date = s2018
-    end_date = today - relativedelta(days=30)
+    current_date = s2025
+    end_date = today
 
     # last_ts and timestamp make sure we only process each friday once
     last_ts = None
@@ -40,7 +40,7 @@ def screen_stocks(PRICE_DATA):
         date_str = current_date.strftime("%Y-%m-%d")
         timestamp = find_closest_date(PRICE_DATA, date_str)
         if timestamp != last_ts:
-            filtered_price_date, date = rs_ranking.main(PRICE_DATA, date_str)
+            filtered_price_date, date = rs_ranking.main(PRICE_DATA, timestamp)
             # back_test(PRICE_DATA)
             last_ts = timestamp
 
@@ -193,8 +193,8 @@ def back_test(PRICE_DATA, stop_loss=9.0, stop_gain=0.0):
 
 def main():
     PRICE_DATA = rs_ranking.load_data()
-    # just_testing = False
-    just_testing = True
+    just_testing = False
+    # just_testing = True
 
     if (just_testing):
         # back_test(PRICE_DATA, 2, 0.25)
