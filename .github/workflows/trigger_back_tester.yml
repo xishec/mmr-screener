@@ -1,4 +1,4 @@
-name: Screen Stocks
+name: Trigger back tester
 
 on:
   # push:
@@ -11,7 +11,7 @@ on:
   #   types: [ completed ]
 
 jobs:
-  screen-stocks:
+  back_test:
     runs-on: ubuntu-latest
     steps:
       - name: checkout repo content
