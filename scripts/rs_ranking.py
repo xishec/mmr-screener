@@ -7,10 +7,13 @@ import string
 import sys
 
 import yaml
-from rs_data import cfg
-import screen_stocks
+
+
 import pandas as pd
 import datetime
+
+from scripts import screen_stocks
+from scripts.rs_data import cfg
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 pd.set_option('display.max_rows', None)
