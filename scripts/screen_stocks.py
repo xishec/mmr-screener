@@ -235,15 +235,15 @@ def screen(filtered_price_date, end_date):
 
         # last_max_price > 90 -> A price like this must be at least 90 days ago -> soit at ATH, soit ATH since 90 days
         # 90 > last_max_price_yesterday -> we had yesterday's price within 90d -> I need at least one mini vcp loop
-        is_breakout = 0 < price_change < 1.5 and last_max_price > 90 > last_max_price_yesterday > 2
+        is_breakout = 0 < price_change < 1 and last_max_price > 90 > last_max_price_yesterday > 2
 
         if score >= 6 and is_breakout:
             market_cap, beta, next_earning = get_market_cap_beta(ticker)
             if market_cap == 0: continue
             market_cap_billion = market_cap / 1e9
             # google_sheet_condition = beta <= 0.9 and max_mov5 <= 3 and max_mov100 <= 8 and 1.02 <= close_sma10
-            google_sheet_condition = (beta is not None and beta <= 1.5 and max_mov5 <= 9 and
-                                      max_mov100 <= 9 and 1.01 <= close_sma10)
+            google_sheet_condition = (beta is not None and beta <= 1.1 and 0.5 <= max_mov5 <= 9 and
+                                      max_mov100 <= 7 and 1.02 <= close_sma10)
             if 10 < market_cap_billion < 100 and google_sheet_condition:
                 date_string = datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d')
                 results.append(

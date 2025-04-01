@@ -44,7 +44,7 @@ def screen_stocks(PRICE_DATA):
             # back_test(PRICE_DATA)
             last_ts = timestamp
 
-        current_date += relativedelta(days=3)
+        current_date += relativedelta(days=1)
 
 
 import datetime
