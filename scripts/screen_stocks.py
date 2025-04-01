@@ -183,7 +183,7 @@ def screen(filtered_price_date, end_date):
         # return
 
         ticker = row[0]
-        print(f"Screening stocks {ticker} \r{i + 1} / {total}, {(i + 1) / total * 100:.2f}% ", end="", flush=True)
+        # print(f"Screening stocks {ticker} \r{i + 1} / {total}, {(i + 1) / total * 100:.2f}% ", end="", flush=True)
 
         sma10 = calculate_sma(price_history[ticker], 10)
         sma50 = calculate_sma(price_history[ticker], 50)
@@ -191,6 +191,8 @@ def screen(filtered_price_date, end_date):
         sma200 = calculate_sma(price_history[ticker], 200)
         sma200_22 = calculate_sma(price_history[ticker], 200, 22)
 
+        if len(price_history[ticker]["candles"]) < 2:
+            continue
         latest_close_price = price_history[ticker]["candles"][-1]["close"]
         yesterday_close_price = price_history[ticker]["candles"][-2]["close"]
         volume = price_history[ticker]["candles"][-1]["volume"]
