@@ -114,7 +114,7 @@ def check_stop_loss(start_timestamp, candles_dict, stop_loss, stop_gain):
 
 def back_test(PRICE_DATA, stop_loss=9.0, stop_gain=0.0):
     output_dir = os.path.join(os.path.dirname(DIR), 'screen_results')
-    file_path = os.path.join(output_dir, f'screen_results.csv')
+    file_path = os.path.join(output_dir, f'screen_results copy.csv')
     global_holding_days = []
     global_profits = []
 
@@ -190,28 +190,27 @@ def back_test(PRICE_DATA, stop_loss=9.0, stop_gain=0.0):
         print("\n")
     return f"{annualized_return:.2f}% in {d:.2f}d"
 
-
 def main():
     PRICE_DATA = rs_ranking.load_data()
-    just_testing = False
-    # just_testing = True
+    # just_testing = False
+    just_testing = True
 
     if (just_testing):
-        # back_test(PRICE_DATA, 2, 0.25)
+        # back_test(PRICE_DATA, 7, 100)
 
         stop_loss = 0.0
         rows = []
-        while stop_loss <= 20:
+        while stop_loss <= 10:
             columns = []
             stop_gain = 0.0
-            while stop_gain <= 40:
+            while stop_gain <= 20:
                 columns.append(
                     f"({stop_loss:>4.1f} {stop_gain:>4.1f}) {back_test(PRICE_DATA, stop_loss, stop_gain):>25}")
                 if stop_gain < 2:
-                    stop_gain = round(stop_gain + 2, 2)
+                    stop_gain = round(stop_gain + 1, 2)
                 else:
                     stop_gain = round(stop_gain + 1, 2)
-            stop_loss = round(stop_loss + 2, 1)
+            stop_loss = round(stop_loss + 1, 1)
             rows.append(columns)
 
         for row in rows:
