@@ -223,7 +223,6 @@ def screen(filtered_price_date, end_date, new_csv=False):
         ]
 
         mm_score = sum(1 for mm_condition in mm_conditions if mm_condition)
-        mm_score_max = len(mm_conditions)
 
         avg_volume100 = find_avg_volume(price_history[ticker], 100)
         volume_volume100 = volume / avg_volume100 if avg_volume100 else 0
@@ -248,25 +247,22 @@ def screen(filtered_price_date, end_date, new_csv=False):
                 max_mov100 <= 9,
                 1.02 <= close_sma10,
                 888 <= last_max_price,
+                5 <= market_cap_billion < 50
             ]
 
             xc_score = sum(1 for xc_condition in xc_conditions if xc_condition)
-            xc_score_max = len(xc_conditions)
 
-            if 10 < market_cap_billion < 100:
-                date_string = datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d')
-                score_percentage = (mm_score + xc_score) * 100 / (mm_score_max + xc_score_max)
-                if (score_percentage < 80):
-                    continue
+            date_string = datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d')
+
+            if xc_score >= 5:
                 results.append(
-                    (ticker, f"{market_cap_billion:>6.2f}B", date_string, f"{latest_close_price:>7.2f}$",
+                    (ticker, f"{market_cap_billion:>6.2f}", date_string, f"{latest_close_price:>7.2f}$",
                      f"{price_change:>6.2f}", f"{volume_volume100:>6.2f}", last_max_price, last_max_volume,
                      f"{close_sma50:>6.2f}", f"{close_sma150:>6.2f}", f"{close_sma200:>6.2f}",
                      f"{sma50_sma150:>6.2f}", f"{sma50_sma200:>6.2f}", f"{sma150_sma200:>6.2f}",
                      f"{trending_up:>6.2f}", beta, f"{max_mov5:>6.2f}", f"{max_mov100:>6.2f}",
                      f"{vix:>6.2f}", f"{vix_sma20:>6.2f}", f"{close_sma10:>6.2f}",
-                     f"{mm_score}/{mm_score_max}", f"{xc_score}/{xc_score_max}",
-                     f"{score_percentage:>4.2f}%", "N/A")),
+                     f"{mm_score}/7", f"{xc_score}/7", f"N/A", "N/A")),
 
     save_market_cap_cache()
     print("\n")
