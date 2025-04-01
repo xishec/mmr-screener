@@ -166,7 +166,7 @@ def get_market_cap_beta(ticker_symbol):
     return 0, 0, None
 
 
-def screen(filtered_price_date, end_date):
+def screen(filtered_price_date, end_date, new_csv=False):
     first_half_rows = load_csv(end_date)
     price_history = filtered_price_date
     results = []
@@ -212,21 +212,18 @@ def screen(filtered_price_date, end_date):
         sma150_sma200 = sma150 / sma200 if sma200 else 0
         trending_up = sma200 / sma200_22 if sma200_22 else 0
 
-        score = 0
-        if close_sma50 >= 1:
-            score += 1
-        if close_sma150 >= 1:
-            score += 1
-        if close_sma200 >= 1:
-            score += 1
-        if sma50_sma150 >= 1:
-            score += 1
-        if sma50_sma200 >= 1:
-            score += 1
-        if sma150_sma200 >= 1:
-            score += 1
-        if trending_up >= 1:
-            score += 1
+        mm_conditions = [
+            close_sma50 > 1,
+            close_sma150 > 1,
+            close_sma200 > 1,
+            sma50_sma150 > 1,
+            sma50_sma200 > 1,
+            sma150_sma200 > 1,
+            trending_up > 1,
+        ]
+
+        mm_score = sum(1 for mm_condition in mm_conditions if mm_condition)
+        mm_score_max = len(mm_conditions)
 
         avg_volume100 = find_avg_volume(price_history[ticker], 100)
         volume_volume100 = volume / avg_volume100 if avg_volume100 else 0
@@ -235,17 +232,32 @@ def screen(filtered_price_date, end_date):
 
         # last_max_price > 90 -> A price like this must be at least 90 days ago -> soit at ATH, soit ATH since 90 days
         # 90 > last_max_price_yesterday -> we had yesterday's price within 90d -> I need at least one mini vcp loop
-        is_breakout = 0 < price_change < 1 and last_max_price > 90 > last_max_price_yesterday > 2
+        is_breakout = 0 < price_change < 8 and last_max_price > 90 > last_max_price_yesterday > 2
 
-        if score >= 6 and is_breakout:
+        if mm_score >= 6 and is_breakout:
             market_cap, beta, next_earning = get_market_cap_beta(ticker)
             if market_cap == 0: continue
             market_cap_billion = market_cap / 1e9
-            # google_sheet_condition = beta <= 0.9 and max_mov5 <= 3 and max_mov100 <= 8 and 1.02 <= close_sma10
-            google_sheet_condition = (beta is not None and beta <= 1.1 and 0.5 <= max_mov5 <= 9 and
-                                      max_mov100 <= 7 and 1.02 <= close_sma10)
-            if 10 < market_cap_billion < 100 and google_sheet_condition:
+            # google_sheet_condition = ((beta is None or (beta is not None and beta <= 1.1)) and 0.5 <= max_mov5 <= 9 and
+            #                           max_mov100 <= 9 and 1.02 <= close_sma10)
+
+            xc_conditions = [
+                0 <= price_change <= 1,
+                beta is None or beta <= 1.1,
+                0.5 <= max_mov5 <= 9,
+                max_mov100 <= 9,
+                1.02 <= close_sma10,
+                888 <= last_max_price,
+            ]
+
+            xc_score = sum(1 for xc_condition in xc_conditions if xc_condition)
+            xc_score_max = len(xc_conditions)
+
+            if 10 < market_cap_billion < 100:
                 date_string = datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d')
+                score_percentage = (mm_score + xc_score) * 100 / (mm_score_max + xc_score_max)
+                if (score_percentage < 80):
+                    continue
                 results.append(
                     (ticker, f"{market_cap_billion:>6.2f}B", date_string, f"{latest_close_price:>7.2f}$",
                      f"{price_change:>6.2f}", f"{volume_volume100:>6.2f}", last_max_price, last_max_volume,
@@ -253,7 +265,8 @@ def screen(filtered_price_date, end_date):
                      f"{sma50_sma150:>6.2f}", f"{sma50_sma200:>6.2f}", f"{sma150_sma200:>6.2f}",
                      f"{trending_up:>6.2f}", beta, f"{max_mov5:>6.2f}", f"{max_mov100:>6.2f}",
                      f"{vix:>6.2f}", f"{vix_sma20:>6.2f}", f"{close_sma10:>6.2f}",
-                     "N/A", "N/A", "N/A", "N/A")),
+                     f"{mm_score}/{mm_score_max}", f"{xc_score}/{xc_score_max}",
+                     f"{score_percentage:>4.2f}%", "N/A")),
 
     save_market_cap_cache()
     print("\n")
@@ -271,7 +284,10 @@ def screen(filtered_price_date, end_date):
                                "Sell Date", "Holding Duration", "Profit", "Sell reason"])
     df = df.sort_values((["Ticker"]), ascending=True)
 
-    output_path = os.path.join(os.path.dirname(DIR), 'screen_results', f'screen_results.csv')
+    if new_csv:
+        output_path = os.path.join(os.path.dirname(DIR), 'screen_results', f'screen_results_{end_date}.csv')
+    else:
+        output_path = os.path.join(os.path.dirname(DIR), 'screen_results', f'screen_results.csv')
     header = not os.path.exists(output_path)
     df.to_csv(output_path, mode='a', index=False, header=header)
 
@@ -279,9 +295,9 @@ def screen(filtered_price_date, end_date):
     print("\n")
 
 
-def main(filtered_price_date=None, end_date=None):
+def main(filtered_price_date=None, end_date=None, new_csv=False):
     if filtered_price_date is not None and end_date is not None:
-        screen(filtered_price_date, end_date)
+        screen(filtered_price_date, end_date, new_csv)
 
 
 if __name__ == "__main__":

@@ -8,7 +8,6 @@ import sys
 
 import yaml
 
-
 import pandas as pd
 import datetime
 
@@ -81,7 +80,7 @@ def rankings(PRICE_DATA, end_date):
     output_dir = os.path.join(os.path.dirname(DIR), 'rs_stocks')
     output_path = os.path.join(output_dir, f'rs_stocks_{end_date}.csv')
     original_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
-    for i in range(0, 11):
+    for i in range(0, 1):
         try_date = original_date - datetime.timedelta(days=i)
         try_date_str = try_date.strftime("%Y-%m-%d")
         output_path = os.path.join(output_dir, f'rs_stocks_{try_date_str}.csv')
@@ -218,7 +217,7 @@ def load_data():
     return PRICE_DATA
 
 
-def main(PRICE_DATA=None, timestamp_override=None):
+def main(PRICE_DATA=None, timestamp_override=None, new_csv=False):
     if PRICE_DATA is None:
         PRICE_DATA = load_data()
 
@@ -240,7 +239,7 @@ def main(PRICE_DATA=None, timestamp_override=None):
     print(f"Loaded data from {start_date} to {end_date}")
 
     rankings(filtered_price_date, end_date)
-    screen_stocks.main(filtered_price_date, end_date)
+    screen_stocks.main(filtered_price_date, end_date, new_csv)
 
     return filtered_price_date, end_date
 
