@@ -36,7 +36,7 @@ jobs:
             async function checkWorkflowsCompletion() {
               let incompleteRuns = [];
               do {
-                await sleep(1000);
+                await sleep(10000);
                 const runsResponse = await github.rest.actions.listWorkflowRunsForRepo({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
