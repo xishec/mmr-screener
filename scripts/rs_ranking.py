@@ -96,8 +96,8 @@ def rankings(PRICE_DATA, end_date):
     closes_ref = pd.Series([candle["close"] for candle in PRICE_DATA[REFERENCE_TICKER]["candles"]])
 
     for i, (ticker, data) in enumerate(PRICE_DATA.items()):
-        print(f"\rCalculating ranking for {ticker:>5}, {i + 1:>5} / {total:>5}, {(i + 1) / total * 100:>6.2f}% ",
-              end="", flush=True)
+        # print(f"\rCalculating ranking for {ticker:>5}, {i + 1:>5} / {total:>5}, {(i + 1) / total * 100:>6.2f}% ",
+        #       end="", flush=True)
         try:
             closes = pd.Series([candle["close"] for candle in data["candles"]], dtype=float)
             if len(closes) >= 6 * 20:
