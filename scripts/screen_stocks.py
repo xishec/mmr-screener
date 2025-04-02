@@ -254,9 +254,9 @@ def screen(filtered_price_date, end_date, new_csv=False):
 
             date_string = datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d')
 
-            if xc_score >= 5:
+            if xc_score >= 5 and 1 <= market_cap_billion < 200:
                 results.append(
-                    (ticker, f"{market_cap_billion:>6.2f}", date_string, f"{latest_close_price:>7.2f}$",
+                    (ticker, f"{mm_score}/7 {xc_score}/7", date_string, f"{latest_close_price:>7.2f}$",
                      f"{price_change:>6.2f}", f"{volume_volume100:>6.2f}", last_max_price, last_max_volume,
                      f"{close_sma50:>6.2f}", f"{close_sma150:>6.2f}", f"{close_sma200:>6.2f}",
                      f"{sma50_sma150:>6.2f}", f"{sma50_sma200:>6.2f}", f"{sma150_sma200:>6.2f}",
