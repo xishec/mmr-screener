@@ -2,8 +2,8 @@ name: Manual 26 Triggers
 
 on:
   schedule:
-    - cron: "0 22 * * *"  # Runs at 18:00 EDT (March–November)
-    - cron: "0 23 * * *"  # Runs at 18:00 EST (November–March)
+    - cron: "0 21 * * *"  # Runs at 17:00 EDT (March–November)
+    - cron: "0 22 * * *"  # Runs at 17:00 EST (November–March)
   workflow_dispatch:      # Allow manual trigger
 
 jobs:
