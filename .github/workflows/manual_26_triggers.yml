@@ -4,6 +4,7 @@ on:
   schedule:
     - cron: "0 1 * * *"  # Runs at 21:00 EDT (March–November)
     - cron: "0 2 * * *"  # Runs at 21:00 EST (November–March)
+    - cron: "0 3 * * *"  # Runs at 21:00 EST (November–March)
   workflow_dispatch:      # Allow manual trigger
 
 jobs:
