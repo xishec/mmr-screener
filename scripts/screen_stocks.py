@@ -281,11 +281,17 @@ def screen(filtered_price_date, end_date, new_csv=False):
     df = df.sort_values((["Ticker"]), ascending=True)
 
     if new_csv:
-        output_path = os.path.join(os.path.dirname(DIR), 'screen_results', f'screen_results_{end_date}.csv')
+        result_tickers = [r[0] for r in results]
+        filtered_price_date_results = {
+            t: filtered_price_date[t] for t in result_tickers if t in filtered_price_date
+        }
+        json_path = os.path.join(os.path.dirname(DIR), 'screen_results/daily', f'screen_results_{end_date}.json')
+        with open(json_path, 'w') as outfile:
+            json.dump(filtered_price_date_results, outfile)
     else:
         output_path = os.path.join(os.path.dirname(DIR), 'screen_results', f'screen_results.csv')
-    header = not os.path.exists(output_path)
-    df.to_csv(output_path, mode='a', index=False, header=header)
+        header = not os.path.exists(output_path)
+        df.to_csv(output_path, mode='a', index=False, header=header)
 
     print(df)
     print("\n")

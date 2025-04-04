@@ -150,23 +150,29 @@ def rankings(PRICE_DATA, end_date):
 def find_closest_date(PRICE_DATA, target_date_str):
     target_ts = int(datetime.datetime.strptime(target_date_str, "%Y-%m-%d").timestamp())
 
-    # find max candles
+    # find max candles based on the earliest timestamp
     max_candles = None
     min_timestamp = None
 
     for data in PRICE_DATA.values():
         candles = data.get("candles", [])
+        if not candles:
+            continue
         timestamp = candles[0]["datetime"]
-        if min_timestamp is None or min_timestamp > timestamp:
+        if timestamp == target_ts:
+            return target_ts
+        if min_timestamp is None or timestamp < min_timestamp:
             min_timestamp = timestamp
             max_candles = candles
+
+    if max_candles is None:
+        return None  # or raise an exception
 
     def key_function(item):
         index, candle = item
         return abs(candle["datetime"] - target_ts)
 
     _, closest_candle = min(enumerate(max_candles), key=key_function)
-
     return closest_candle["datetime"]
 
 
@@ -232,9 +238,9 @@ def main(PRICE_DATA=None, timestamp_override=None, new_csv=False):
     #     date = sys.argv[1]
 
     filtered_price_date = filter_price_data_by_index(PRICE_DATA, timestamp)
-    start_date = (datetime.datetime.fromtimestamp(filtered_price_date["A"]["candles"][0]["datetime"])
+    start_date = (datetime.datetime.fromtimestamp(filtered_price_date["SPY"]["candles"][0]["datetime"])
                   .strftime("%Y-%m-%d"))
-    end_date = (datetime.datetime.fromtimestamp(filtered_price_date["A"]["candles"][-1]["datetime"])
+    end_date = (datetime.datetime.fromtimestamp(filtered_price_date["SPY"]["candles"][-1]["datetime"])
                 .strftime('%Y-%m-%d'))
     print(f"Loaded data from {start_date} to {end_date}")
 
