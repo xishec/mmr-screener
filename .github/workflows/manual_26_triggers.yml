@@ -2,7 +2,7 @@ name: Manual 26 Triggers
 
 on:
   schedule:
-    - cron: '30 2 * * *' # 10:30 PM Montreal during DST (March–Nov)
+    - cron: '*/5 * * * *'
   workflow_dispatch:      # Allow manual trigger
 
 jobs:
