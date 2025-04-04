@@ -2,7 +2,7 @@ name: Manual 26 Triggers
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '* */6 * * *'
   workflow_dispatch:      # Allow manual trigger
 
 jobs:
