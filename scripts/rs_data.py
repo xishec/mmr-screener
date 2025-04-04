@@ -216,7 +216,7 @@ def get_yf_data(ticker, start_date, end_date):
 def load_prices_from_yahoo(char):
     today = date.today()
     start = time.time()
-    s2018 = datetime.strptime("2018-01-01", "%Y-%m-%d") - relativedelta(years=2)
+    s2018 = datetime.strptime("2022-01-01", "%Y-%m-%d") - relativedelta(years=2)
     # start_date = today - dt.timedelta(days=5 * 365)
     start_date = s2018
     tickers_dict = {}

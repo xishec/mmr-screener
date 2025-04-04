@@ -245,7 +245,7 @@ def main(PRICE_DATA=None, timestamp_override=None, new_csv=False):
     print(f"Loaded data from {start_date} to {end_date}")
 
     rankings(filtered_price_date, end_date)
-    screen_stocks.main(filtered_price_date, end_date, new_csv)
+    screen_stocks.main(PRICE_DATA, filtered_price_date, end_date, new_csv)
 
     return filtered_price_date, end_date
 

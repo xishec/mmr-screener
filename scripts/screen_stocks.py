@@ -166,7 +166,7 @@ def get_market_cap_beta(ticker_symbol):
     return 0, 0, None
 
 
-def screen(filtered_price_date, end_date, new_csv=False):
+def screen(PRICE_DATA, filtered_price_date, end_date, new_csv=False):
     first_half_rows = load_csv(end_date)
     price_history = filtered_price_date
     results = []
@@ -281,18 +281,18 @@ def screen(filtered_price_date, end_date, new_csv=False):
     df = df.sort_values((["Ticker"]), ascending=True)
 
     if new_csv:
-        filtered_price_date_results = {}
+        results_with_candles = {}
         for r in results:
             ticker = r[0]
-            if ticker in filtered_price_date:
-                filtered_price_date_results[ticker] = {
-                    "price_data": filtered_price_date[ticker],
+            if ticker in PRICE_DATA:
+                results_with_candles[ticker] = {
+                    "price_data": PRICE_DATA[ticker],
                     "score": r[1],
                     "date": r[2]
                 }
         json_path = os.path.join(os.path.dirname(DIR), 'screen_results/daily', f'screen_results_{end_date}.json')
         with open(json_path, 'w') as outfile:
-            json.dump(filtered_price_date_results, outfile)
+            json.dump(results_with_candles, outfile)
     else:
         output_path = os.path.join(os.path.dirname(DIR), 'screen_results', f'screen_results.csv')
         header = not os.path.exists(output_path)
@@ -302,9 +302,9 @@ def screen(filtered_price_date, end_date, new_csv=False):
     print("\n")
 
 
-def main(filtered_price_date=None, end_date=None, new_csv=False):
+def main(PRICE_DATA, filtered_price_date=None, end_date=None, new_csv=False):
     if filtered_price_date is not None and end_date is not None:
-        screen(filtered_price_date, end_date, new_csv)
+        screen(PRICE_DATA, filtered_price_date, end_date, new_csv)
 
 
 if __name__ == "__main__":
