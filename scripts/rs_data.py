@@ -14,6 +14,7 @@ from io import StringIO
 from datetime import date
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from requests.exceptions import ConnectionError, HTTPError, Timeout
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -49,27 +50,34 @@ def cfg(key):
 def get_tickers_from_nasdaq():
     print("*** Loading Stocks from Nasdaq ***")
     url = "https://www.nasdaqtrader.com/dynamic/symdir/nasdaqtraded.txt"
+    max_retries = 5
+    backoff_factor = 1
 
-    response = requests.get(url)
-    response.raise_for_status()
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            df = pd.read_csv(StringIO(response.text), delimiter='|')
 
-    df = pd.read_csv(StringIO(response.text), delimiter='|')
+            # Drop rows with missing 'Symbol' values and filter out rows with '$' in 'Symbol'
+            filtered_symbols = df.dropna(subset=['Symbol'])
+            filtered_symbols = filtered_symbols[~filtered_symbols['Symbol'].str.contains(r'\$')]
+            filtered_symbols['Symbol'] = filtered_symbols['Symbol'].str.replace(".", "", regex=False)
 
-    # Drop rows with missing 'Symbol' values and filter out rows with '$' in 'Symbol'
-    filtered_symbols = df.dropna(subset=['Symbol'])
-    filtered_symbols = filtered_symbols[~filtered_symbols['Symbol'].str.contains(r'\$')]
-    filtered_symbols['Symbol'] = filtered_symbols['Symbol'].str.replace(".", "", regex=False)
+            # Extract the 'Symbol' column as a list
+            symbols_list = filtered_symbols['Symbol'].tolist()
 
-    # Extract the 'Symbol' column as a list
-    symbols_list = filtered_symbols['Symbol'].tolist()
-
-    # filtered_symbols = []
-    # for letter in string.ascii_uppercase:
-    #     letter_symbols = df[df['Symbol'].str.startswith(letter)].head(7)
-    #     filtered_symbols.extend(letter_symbols['Symbol'].tolist())
-
-    print(f"Retrieved {len(symbols_list)} symbols from NASDAQ")
-    return symbols_list
+            print(f"Retrieved {len(symbols_list)} symbols from NASDAQ")
+            return symbols_list
+        except (ConnectionError, HTTPError, Timeout) as e:
+            print(f"Attempt {attempt + 1} failed: {e}")
+            if attempt < max_retries - 1:
+                sleep_time = backoff_factor * (2 ** attempt)
+                print(f"Retrying in {sleep_time} seconds...")
+                time.sleep(sleep_time)
+            else:
+                print("Max retries reached. Exiting.")
+                raise
 
 
 def write_to_file(dict, file):
