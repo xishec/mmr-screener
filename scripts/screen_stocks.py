@@ -268,7 +268,8 @@ def screen(PRICE_DATA, filtered_price_date, end_date, new_csv=False):
     print("\n")
     if len(results) == 0:
         print("No stocks passed\n")
-        return
+        results = [("No stocks paassed", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-",
+                    "-", "-", "-", "-", "-", "-", "-")]
 
     df = pd.DataFrame(results,
                       columns=["Ticker", "Market Cap", "Date", "Close Price",
