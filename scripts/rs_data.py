@@ -4,7 +4,7 @@ import sys
 import time
 import datetime as dt
 import os
-import requests
+# import requests
 import yaml
 import yfinance as yf
 import pandas as pd
@@ -15,6 +15,10 @@ from datetime import date
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from requests.exceptions import ConnectionError, HTTPError, Timeout
+
+from curl_cffi import requests
+
+session = requests.Session(impersonate="chrome")
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -80,6 +84,26 @@ def get_tickers_from_nasdaq():
                 raise
 
 
+def get_tickers_from_file():
+    print("*** Loading Stocks from File ***")
+    file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data_persist', 'tickers_with_mk.json')
+
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            data = json.load(file)
+
+        # Filter tickers where market_cap is not 0
+        tickers = [ticker for ticker, details in data.items() if details.get("market_cap", 0) > 0]
+        print(f"Retrieved {len(tickers)} tickers with non-zero market cap from file.")
+        return tickers
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
+        return []
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON: {e}")
+        return []
+
+
 def write_to_file(dict, file):
     with open(file, "w", encoding='utf8') as fp:
         json.dump(dict, fp, ensure_ascii=False)
@@ -116,7 +140,7 @@ def get_remaining_seconds(all_load_times, idx, len):
 
 def get_yf_data(ticker, start_date, end_date):
     ticker_data = {}
-    rate_limit_delay = 0.5
+    rate_limit_delay = 0.1
     max_retries = 5
 
     for attempt in range(max_retries):
@@ -221,10 +245,11 @@ def load_prices_from_yahoo(char):
     failed_tickers = []
 
     # Add retry mechanism
-    max_retries = 2
-    base_delay = 2  # seconds
+    max_retries = 8
+    base_delay = 1  # seconds
 
-    tickers = ([ticker for ticker in get_tickers_from_nasdaq()
+    # tickers = ([ticker for ticker in get_tickers_from_nasdaq()
+    tickers = ([ticker for ticker in get_tickers_from_file()
                 if (ticker.lower().startswith(char.lower()))]
                + ["SPY", "^VIX"])
 
