@@ -116,109 +116,98 @@ def get_remaining_seconds(all_load_times, idx, len):
 
 def get_yf_data(ticker, start_date, end_date):
     ticker_data = {}
+    rate_limit_delay = 0.5
+    max_retries = 5
 
-    try:
-        # Import the random user agent function
-        # First check if we need to import it
+    for attempt in range(max_retries):
         try:
-            from user_agents import get_random_user_agent
-        except ImportError:
-            # If import fails, use a default method
-            # Define the function inline if we can't import it
-            def get_random_user_agent():
-                import random
-                default_agents = [
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
-                    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
-                ]
-                return random.choice(default_agents)
-
-        # Set a random user agent
-        user_agent = get_random_user_agent()
-
-        # Configure yfinance session with the random user agent
-        session = requests.Session()
-        session.headers['User-Agent'] = user_agent
-
-        # Download data with auto_adjust=False (based on Reddit fix) and using our custom session
-        df = yf.download(
-            ticker,
-            start=start_date,
-            end=end_date,
-            auto_adjust=False,
-            progress=False,
-            session=session,
-            rounding=True
-        )
-
-        # Add a small delay to avoid rate limiting (adjust as needed)
-        time.sleep(0.1)
-
-        # Check if DataFrame is empty
-        if df.empty:
-            print(f"No data found for {ticker}, symbol may be delisted or incorrect")
-            return None
-
-        # Fix the MultiIndex columns by dropping the second level
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.droplevel(1)
-
-        # Convert to dictionary and process as in the original simple function
-        yahoo_response = df.to_dict()
-
-        # Check if we have all required columns
-        required_cols = ["Open", "Close", "Low", "High", "Volume"]
-        if not all(col in yahoo_response for col in required_cols):
-            print(f"Missing required columns for {ticker}. Available: {list(yahoo_response.keys())}")
-            return None
-
-        timestamps = list(yahoo_response["Open"].keys())
-        timestamps = timestamps = [int((timestamp + relativedelta(hours=16)).timestamp())
-                                   for timestamp in timestamps]
-
-        opens = list(yahoo_response["Open"].values())
-        closes = list(yahoo_response["Adj Close"].values())
-        lows = list(yahoo_response["Low"].values())
-        highs = list(yahoo_response["High"].values())
-        volumes = list(yahoo_response["Volume"].values())
-
-        candles = []
-        for i in range(0, len(opens)):
-            candle = {}
-            candle["open"] = opens[i]
-            candle["close"] = closes[i]
-            candle["low"] = lows[i]
-            candle["high"] = highs[i]
-            candle["volume"] = volumes[i]
-            candle["datetime"] = timestamps[i]
-            candles.append(candle)
-
-        ticker_data["candles"] = candles
-        return ticker_data
-    except Exception as e:
-        print(f"Error downloading data for {ticker}: {str(e)}")
-        # Check if it's a rate limit error and wait longer
-        if "Too Many Requests" in str(e) or "Rate limit" in str(e):
-            print(f"Rate limit hit for {ticker}, will retry later with longer delay")
-            # You might want to implement a more sophisticated retry mechanism here
-
-        # Extensive debug info
-        if 'df' in locals() and not df.empty:
-            print(f"DataFrame shape: {df.shape}")
-            print(f"DataFrame columns: {df.columns}")
-            print(f"DataFrame index: {type(df.index)}")
+            # Import the random user agent function
+            # First check if we need to import it
             try:
-                # Try printing the first row in different formats to help debugging
-                print(f"First row (head): {df.head(1)}")
+                from user_agents import get_random_user_agent
+            except ImportError:
+                # If import fails, use a default method
+                # Define the function inline if we can't import it
+                def get_random_user_agent():
+                    import random
+                    default_agents = [
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+                        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+                    ]
+                    return random.choice(default_agents)
 
-                # Reset index and show columns
-                df_reset = df.reset_index()
-                print(f"Reset index columns: {df_reset.columns}")
-                print(f"First row after reset: {df_reset.iloc[0]}")
-            except Exception as inner_e:
-                print(f"Error during debug: {str(inner_e)}")
-        return None
+            # Set a random user agent
+            user_agent = get_random_user_agent()
+
+            # Configure yfinance session with the random user agent
+            session = requests.Session()
+            session.headers['User-Agent'] = user_agent
+
+            # Download data with auto_adjust=False (based on Reddit fix) and using our custom session
+            df = yf.download(
+                ticker,
+                start=start_date,
+                end=end_date,
+                auto_adjust=False,
+                progress=False,
+                session=session,
+                rounding=True
+            )
+
+            # Add a small delay to avoid rate limiting (adjust as needed)
+            time.sleep(rate_limit_delay)
+
+            # Check if DataFrame is empty
+            if df.empty:
+                print(f"No data found for {ticker}, symbol may be delisted or incorrect")
+                return None
+
+            # Fix the MultiIndex columns by dropping the second level
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = df.columns.droplevel(1)
+
+            # Convert to dictionary and process as in the original simple function
+            yahoo_response = df.to_dict()
+
+            # Check if we have all required columns
+            required_cols = ["Open", "Close", "Low", "High", "Volume"]
+            if not all(col in yahoo_response for col in required_cols):
+                print(f"Missing required columns for {ticker}. Available: {list(yahoo_response.keys())}")
+                return None
+
+            timestamps = list(yahoo_response["Open"].keys())
+            timestamps = timestamps = [int((timestamp + relativedelta(hours=16)).timestamp())
+                                       for timestamp in timestamps]
+
+            opens = list(yahoo_response["Open"].values())
+            closes = list(yahoo_response["Adj Close"].values())
+            lows = list(yahoo_response["Low"].values())
+            highs = list(yahoo_response["High"].values())
+            volumes = list(yahoo_response["Volume"].values())
+
+            candles = []
+            for i in range(0, len(opens)):
+                candle = {}
+                candle["open"] = opens[i]
+                candle["close"] = closes[i]
+                candle["low"] = lows[i]
+                candle["high"] = highs[i]
+                candle["volume"] = volumes[i]
+                candle["datetime"] = timestamps[i]
+                candles.append(candle)
+
+            ticker_data["candles"] = candles
+            return ticker_data
+        except Exception as e:
+            print(f"Error downloading data for {ticker}: {str(e)}")
+            if "Too Many Requests" in str(e) or "Rate limit" in str(e):
+                rate_limit_delay *= 5
+                print(f"Rate limit hit for {ticker}, increasing delay to {rate_limit_delay}s")
+                time.sleep(rate_limit_delay)
+            else:
+                print(f"Non-rate limit error occurred for {ticker}, skipping retries.")
+                break
 
 
 def load_prices_from_yahoo(char):
@@ -280,9 +269,10 @@ def load_prices_from_yahoo(char):
         # Add to results dictionary
         tickers_dict[ticker] = ticker_data
 
-    # Write results to file
-    write_price_history_file(char, tickers_dict)
-
+    if tickers_dict:
+        write_price_history_file(char, tickers_dict)
+    else:
+        print("No tickers data to write.")
     return tickers_dict
 
 
