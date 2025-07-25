@@ -227,11 +227,10 @@ def main(PRICE_DATA=None, timestamp_override=None, new_csv=False):
     if PRICE_DATA is None:
         PRICE_DATA = load_data()
 
-    date = datetime.date.today().strftime("%Y-%m-%d")
-    # date = "2023-11-20"
     if timestamp_override is not None:
         timestamp = timestamp_override
     else:
+        date = datetime.date.today().strftime("%Y-%m-%d")
         timestamp = find_closest_date(PRICE_DATA, date)
 
     # if len(sys.argv) > 1:

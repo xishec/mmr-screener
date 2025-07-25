@@ -11,8 +11,10 @@ DIR = os.path.dirname(os.path.realpath(__file__))
 def main():
     PRICE_DATA = rs_ranking.load_data()
 
-    today = datetime.datetime.today()
-    current_date = today - relativedelta(days=10)
+    # today = datetime.datetime.today()
+    today = datetime.datetime(2025, 7, 16)
+
+    current_date = today - relativedelta(days=30)
     end_date = today
 
     last_ts = None
