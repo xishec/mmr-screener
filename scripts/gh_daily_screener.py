@@ -14,7 +14,7 @@ def main():
     today = datetime.datetime.today()
     # today = datetime.datetime(2025, 7, 16)
 
-    current_date = today - relativedelta(days=30)
+    current_date = today - relativedelta(days=60)
     end_date = today
 
     last_ts = None

@@ -134,36 +134,36 @@ def get_close_max_movement_last_period(prices, period):
     return max_abs
 
 
-def get_market_cap_beta(ticker_symbol):
+def get_market_cap_info(ticker_symbol):
     global market_cap_cache
-    # Check if market cap is already cached
-    if ticker_symbol in market_cap_cache:
-        market_cap = market_cap_cache[ticker_symbol]["market_cap"]
-        beta = market_cap_cache[ticker_symbol]["beta"]
-        next_earning = market_cap_cache[ticker_symbol]["next_earning"]
-        return market_cap, beta, next_earning
+
+    # # Check if market cap is already cached
+    # if ticker_symbol in market_cap_cache:
+    #     market_cap = market_cap_cache[ticker_symbol]["market_cap"]
+    #     beta = market_cap_cache[ticker_symbol]["beta"]
+    #     next_earning = market_cap_cache[ticker_symbol]["next_earning"]
+    #     exchange = market_cap_cache[ticker_symbol]["exchange"]
+    #     return market_cap, beta, next_earning, exchange
 
     for _ in range(2):
         try:
             ticker = yf.Ticker(ticker_symbol)
             info = ticker.info
             market_cap = info.get("marketCap")
-            beta = info.get("beta")
-            next_earning = ticker.calendar["Earnings Date"][0].strftime("%Y-%m-%d")
+            # beta = info.get("beta")
+            # exchange = info.get("exchange")
+            # currency = info.get("currency")
+            # next_earning = ticker.calendar["Earnings Date"][0].strftime("%Y-%m-%d")
             if market_cap is None:
                 market_cap = 0
             market_cap_cache.setdefault(ticker_symbol, {})["market_cap"] = market_cap
-            market_cap_cache[ticker_symbol]["beta"] = beta
-            market_cap_cache[ticker_symbol]["next_earning"] = next_earning
-            return market_cap, beta, next_earning
+            return market_cap, info
         except Exception:
             if _ == 1:
                 time.sleep(1)
             else:
                 market_cap_cache.setdefault(ticker_symbol, {})["market_cap"] = 0
-                market_cap_cache[ticker_symbol]["beta"] = 0
-                market_cap_cache[ticker_symbol]["next_earning"] = None
-    return 0, 0, None
+    return 0, None
 
 
 def screen(PRICE_DATA, filtered_price_date, end_date, new_csv=False):
@@ -234,7 +234,12 @@ def screen(PRICE_DATA, filtered_price_date, end_date, new_csv=False):
         is_breakout = 0 < price_change < 8 and last_max_price > 90 > last_max_price_yesterday > 2
 
         if mm_score >= 6 and is_breakout:
-            market_cap, beta, next_earning = get_market_cap_beta(ticker)
+            market_cap, info = get_market_cap_info(ticker)
+            beta = info.get("beta")
+            exchange = info.get("exchange")
+            currency = info.get("currency")
+            summary =  info.get("longBusinessSummary")
+
             if market_cap == 0: continue
             market_cap_billion = market_cap / 1e9
             # google_sheet_condition = ((beta is None or (beta is not None and beta <= 1.1)) and 0.5 <= max_mov5 <= 9 and
@@ -256,8 +261,8 @@ def screen(PRICE_DATA, filtered_price_date, end_date, new_csv=False):
 
             if xc_score >= 5 and 1 <= market_cap_billion < 200:
                 results.append(
-                    (ticker, f"{mm_score}/7 {xc_score}/7", date_string, f"{latest_close_price:>7.2f}$",
-                     f"{price_change:>6.2f}", f"{volume_volume100:>6.2f}", last_max_price, last_max_volume,
+                    (ticker, f"{mm_score}/7 {xc_score}/7", date_string, exchange,
+                     currency, summary, last_max_price, last_max_volume,
                      f"{close_sma50:>6.2f}", f"{close_sma150:>6.2f}", f"{close_sma200:>6.2f}",
                      f"{sma50_sma150:>6.2f}", f"{sma50_sma200:>6.2f}", f"{sma150_sma200:>6.2f}",
                      f"{trending_up:>6.2f}", beta, f"{max_mov5:>6.2f}", f"{max_mov100:>6.2f}",
@@ -272,8 +277,8 @@ def screen(PRICE_DATA, filtered_price_date, end_date, new_csv=False):
                     "-", "-", "-", "-", "-", "-", "-")]
 
     df = pd.DataFrame(results,
-                      columns=["Ticker", "Market Cap", "Date", "Close Price",
-                               "Price change", "Volume / Avg", "Last max price", "Last max volume",
+                      columns=["Ticker", "Scores", "Date", "Exchange",
+                               "Currency", "Summary", "Last max price", "Last max volume",
                                "Close / SMA50", "Close / SMA150", "Close / SMA200",
                                "SMA50 / SMA150", "SMA50 / SMA200", "SMA150 / SMA200",
                                "Trending up", "Beta", "Max mov5", "Max mov30",
@@ -289,9 +294,12 @@ def screen(PRICE_DATA, filtered_price_date, end_date, new_csv=False):
                 results_with_candles[ticker] = {
                     "price_data": PRICE_DATA[ticker],
                     "score": r[1],
-                    "date": r[2]
+                    "date": r[2],
+                    "exchange": r[3],
+                    "currency": r[4],
+                    "summary": r[5],
                 }
-        json_path = os.path.join(os.path.dirname(DIR), 'screen_results/daily', f'screen_results_{end_date}.json')
+        json_path = os.path.join(os.path.dirname(DIR), 'screen_results/daily', f'screen_results.json')
         with open(json_path, 'w') as outfile:
             json.dump(results_with_candles, outfile)
     else:
