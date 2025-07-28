@@ -238,7 +238,7 @@ def screen(PRICE_DATA, filtered_price_date, end_date, new_csv=False):
             beta = info.get("beta")
             exchange = info.get("exchange")
             currency = info.get("currency")
-            summary =  info.get("longBusinessSummary")
+            summary = info.get("longBusinessSummary")
 
             if market_cap == 0: continue
             market_cap_billion = market_cap / 1e9
@@ -299,7 +299,8 @@ def screen(PRICE_DATA, filtered_price_date, end_date, new_csv=False):
                     "currency": r[4],
                     "summary": r[5],
                 }
-        json_path = os.path.join(os.path.dirname(DIR), 'screen_results/daily', f'screen_results.json')
+        json_path = os.path.join(os.path.dirname(DIR), 'screen_results/daily', 'screen_results.json')
+        os.makedirs(os.path.dirname(json_path), exist_ok=True)
         with open(json_path, 'w') as outfile:
             json.dump(results_with_candles, outfile)
     else:
