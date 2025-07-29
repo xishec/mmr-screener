@@ -148,7 +148,8 @@ def rankings(PRICE_DATA, end_date):
 
 
 def find_closest_date(PRICE_DATA, target_date_str):
-    target_ts = int(datetime.datetime.strptime(target_date_str, "%Y-%m-%d").timestamp())
+    # Convert date string to timestamp with market close time (16:00)
+    target_ts = int(datetime.datetime.strptime(target_date_str, "%Y-%m-%d").replace(hour=16, minute=0, second=0).timestamp())
 
     # find max candles based on the earliest timestamp
     max_candles = None

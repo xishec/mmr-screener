@@ -51,7 +51,7 @@ def load_csv(end_date):
             with open(path, mode='r') as csv_file:
                 csv_reader = csv.reader(csv_file)
                 rows = list(csv_reader)
-                first_half_rows = rows[:len(rows) // 2 + 1]
+                first_half_rows = rows[:len(rows) // 5 + 1]
             return first_half_rows
     return None
 
@@ -233,12 +233,12 @@ def screen(PRICE_DATA, filtered_price_date, end_date, new_csv=False):
         # 90 > last_max_price_yesterday -> we had yesterday's price within 90d -> I need at least one mini vcp loop
         is_breakout = 0 < price_change < 8 and last_max_price > 90 > last_max_price_yesterday > 2
 
-        if mm_score >= 6 and is_breakout:
+        if mm_score >= len(mm_conditions) and is_breakout:
             market_cap, info = get_market_cap_info(ticker)
             beta = info.get("beta")
             exchange = info.get("exchange")
             currency = info.get("currency")
-            summary =  info.get("longBusinessSummary")
+            summary = info.get("longBusinessSummary")
 
             if market_cap == 0: continue
             market_cap_billion = market_cap / 1e9
@@ -259,7 +259,7 @@ def screen(PRICE_DATA, filtered_price_date, end_date, new_csv=False):
 
             date_string = datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d')
 
-            if xc_score >= 5 and 1 <= market_cap_billion < 200:
+            if xc_score >= len(xc_conditions) - 3 and 1 <= market_cap_billion < 200:
                 results.append(
                     (ticker, f"{mm_score}/7 {xc_score}/7", date_string, exchange,
                      currency, summary, last_max_price, last_max_volume,
@@ -273,8 +273,8 @@ def screen(PRICE_DATA, filtered_price_date, end_date, new_csv=False):
     print("\n")
     if len(results) == 0:
         print("No stocks passed\n")
-        results = [("No stocks paassed", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-",
-                    "-", "-", "-", "-", "-", "-", "-")]
+        results = [("No stocks passed", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-",
+                    "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-")]
 
     df = pd.DataFrame(results,
                       columns=["Ticker", "Scores", "Date", "Exchange",
@@ -287,21 +287,50 @@ def screen(PRICE_DATA, filtered_price_date, end_date, new_csv=False):
     df = df.sort_values((["Ticker"]), ascending=True)
 
     if new_csv:
-        results_with_candles = {}
+        formated_results = {}
         for r in results:
             ticker = r[0]
             if ticker in PRICE_DATA:
-                results_with_candles[ticker] = {
-                    "price_data": PRICE_DATA[ticker],
+                candles = PRICE_DATA[ticker]["candles"]
+                signal_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+                # Add 16 hours to signal_date to match market close time
+                signal_timestamp = int((signal_date + relativedelta(hours=16)).timestamp())
+                signal_price = 10000000
+                low_since_signal = signal_price
+                high_since_signal = 0
+                valid = False
+
+                for i, candle in enumerate(candles):
+                    if abs(candle["datetime"] - signal_timestamp) < 86400:  # Within 24 hours
+                        signal_price = candle["close"]
+                    elif candle["datetime"] > signal_timestamp:
+                        valid = True
+                        if candle["close"] < low_since_signal:
+                            low_since_signal = candle["close"]
+                        if candle["close"] > high_since_signal:
+                            high_since_signal = candle["close"]
+
+                last_price = candles[-1]["close"]
+                gain = (last_price - signal_price) / signal_price
+                if valid:
+                    low_since_signal = (low_since_signal - signal_price) / signal_price
+                    high_since_signal = (high_since_signal - signal_price) / signal_price
+                else:
+                    low_since_signal = 0
+                    high_since_signal = 0
+
+                formated_results[ticker] = {
                     "score": r[1],
                     "date": r[2],
                     "exchange": r[3],
                     "currency": r[4],
-                    "summary": r[5],
+                    "gain": gain,
+                    "low_since_signal": low_since_signal,
+                    "high_since_signal": high_since_signal,
                 }
         json_path = os.path.join(os.path.dirname(DIR), 'screen_results/daily', f'screen_results_{end_date}.json')
         with open(json_path, 'w') as outfile:
-            json.dump(results_with_candles, outfile)
+            json.dump(formated_results, outfile)
     else:
         output_path = os.path.join(os.path.dirname(DIR), 'screen_results', f'screen_results.csv')
         header = not os.path.exists(output_path)
